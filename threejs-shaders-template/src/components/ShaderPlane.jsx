@@ -2,16 +2,16 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import GUI from 'lil-gui';
 import vertexShader from '../shaders/vertex.glsl';
 import fragmentShader from '../shaders/fragment.glsl';
-import trailFragmentShader from '../shaders/trailFragment.glsl';
-import trailVertexShader from '../shaders/trailVertex.glsl';
 
 export default function ShaderPlane({ width = window.innerWidth, height = window.innerHeight }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
   const sceneRef = useRef(null);
   const mouseRef = useRef(new THREE.Vector2());
+  const guiRef = useRef(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -25,13 +25,14 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
 
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
+      antialias: true
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     rendererRef.current = renderer;
 
     // Create geometry and materials
-    const geometry = new THREE.PlaneGeometry(1, 1, 256, 256);
+    const geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
     const light = new THREE.PointLight(0xffffff, 1);
     light.position.set(2, 2, 3);
     scene.add(light);
@@ -43,10 +44,8 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
       fragmentShader,
       uniforms: {
         uMouse: { value: mouseRef.current },
-        uTrailTexture: { value: null },
         uNormalMap: { value: normalMap },
         uLightPosition: { value: light.position },
-        uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
       },
@@ -56,12 +55,21 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
+    // Add GUI
+    if (!guiRef.current) {
+      guiRef.current = new GUI();
+      const folder = guiRef.current.addFolder('Effect Controls');
+      folder.add(material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
+      folder.add(material.uniforms.uEffectRadius, 'value', 0.1, 0.5, 0.01).name('Radius');
+    }
+
     const controls = new OrbitControls(camera, canvasRef.current);
     controls.enableDamping = true;
 
     const handleMouseMove = (event) => {
       mouseRef.current.x = event.clientX / width;
       mouseRef.current.y = 1 - event.clientY / height;
+      material.uniforms.uMouse.value = mouseRef.current;
     };
 
     const handleResize = () => {
@@ -87,6 +95,10 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
       geometry.dispose();
       material.dispose();
       renderer.dispose();
+      if (guiRef.current) {
+        guiRef.current.destroy();
+        guiRef.current = null;
+      }
     };
   }, [width, height]);
 
