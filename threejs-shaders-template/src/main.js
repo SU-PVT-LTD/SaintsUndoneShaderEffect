@@ -79,7 +79,7 @@ class ShaderRenderer {
     
     // Add profile selector
     this.material.uniforms.uProfile = { value: 0 };
-    const profiles = { 'Original': 0, 'Enhanced Grayscale': 1, 'Colored': 2 };
+    const profiles = { 'Grayscale': 0, 'Colored': 1 };
     effectFolder.add(this.material.uniforms.uProfile, 'value', profiles).name('Color Profile');
   }
 
