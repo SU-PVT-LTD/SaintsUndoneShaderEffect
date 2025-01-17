@@ -43,14 +43,24 @@ class ShaderRenderer {
     // Geometry
     this.geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
 
+    // Light
+    this.light = new THREE.PointLight(0xffffff, 1);
+    this.light.position.set(1, 1, 2);
+    this.scene.add(this.light);
+
+    // Normal Map Texture
+    const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
+    
     // Material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       uniforms: {
         uMouse: { value: this.mouse },
-        uTrailTexture: { value: null }, // Placeholder for the trail texture
-        uDecay: { value: 0.95 }, // Decay factor for the trail
+        uTrailTexture: { value: null },
+        uNormalMap: { value: normalMap },
+        uLightPosition: { value: this.light.position },
+        uDecay: { value: 0.95 },
       },
       side: THREE.DoubleSide,
     });
