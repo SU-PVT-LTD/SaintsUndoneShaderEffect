@@ -1,3 +1,4 @@
+
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "lil-gui";
@@ -61,8 +62,8 @@ class ShaderRenderer {
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
         uDecay: { value: 0.98 },
-        uDisplacementStrength: { value: 0.15 },
-        uEffectRadius: { value: 0.3 },
+        uDisplacementStrength: { value: 0.1 },
+        uEffectRadius: { value: 0.2 },
         time: { value: 0 },
       },
       transparent: true,
@@ -97,9 +98,9 @@ class ShaderRenderer {
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uTrailTexture: { value: null }, // Previous frame texture
-        uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.95 }, // Decay factor
+        uTrailTexture: { value: null },
+        uCurrentTexture: { value: null },
+        uDecay: { value: 0.95 },
       },
     });
 
@@ -128,6 +129,7 @@ class ShaderRenderer {
   initRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
+      antialias: true,
     });
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
