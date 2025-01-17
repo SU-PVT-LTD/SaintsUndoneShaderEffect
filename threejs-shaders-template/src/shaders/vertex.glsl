@@ -16,13 +16,16 @@ void main()
     float strength = 1.0 - smoothstep(0.0, uEffectRadius, dist);
     strength = pow(strength, 2.0); // Sharper falloff
     
-    // Sample normal map for displacement with enhanced depth
-    vec3 normalColor = texture2D(uNormalMap, vUv).rgb;
-    float displacement = (normalColor.r + normalColor.g + normalColor.b) / 3.0;
-    displacement = pow(displacement, 1.5); // Enhance depth contrast
+    // Sample normal map and convert to world space normal
+    vec3 normalColor = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
+    vec3 surfaceNormal = normalize(normalMatrix * normalColor);
     
-    // Apply displacement along normal with configurable strength
-    vec3 newPosition = position + normal * displacement * strength * uDisplacementStrength;
+    // Calculate displacement using normal map direction
+    float displacement = dot(normalColor, vec3(0.0, 0.0, 1.0));
+    
+    // Apply displacement using both surface normal and base normal
+    vec3 displacementVector = mix(normal, surfaceNormal, 0.5);
+    vec3 newPosition = position + displacementVector * displacement * strength * uDisplacementStrength;
     
     vNormal = normalMatrix * normal;
     vPosition = (modelViewMatrix * vec4(newPosition, 1.0)).xyz;
