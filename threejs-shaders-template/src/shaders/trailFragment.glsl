@@ -10,7 +10,7 @@ void main() {
     float dist = length(uMouse - vUv);
     float mouseMask = smoothstep(0.05, 0.0, dist);
 
-    vec4 mouseColor = vec4(1.0, 1.0, 1.0, 1.0) * mouseMask * uIntensity;
+    vec4 mouseColor = vec4(0.0, 0.3, 1.0, 1.0) * mouseMask * uIntensity;
     vec4 trail = current * uDecay + mouseColor;
 
     gl_FragColor = trail;
