@@ -50,7 +50,7 @@ class ShaderRenderer {
 
     // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
-    
+
     // Material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
@@ -98,7 +98,7 @@ class ShaderRenderer {
       uniforms: {
         uTrailTexture: { value: null }, // Previous frame texture
         uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.95 }, // Decay factor
+        uDecay: { value: 0.98 }, // Decay factor
       },
     });
 
@@ -167,35 +167,35 @@ class ShaderRenderer {
   updateTrailTexture() {
     // Swap render targets for ping-pong effect
     const temp = this.trailRenderTarget.clone();
-    
+
     // Render the current scene to temp target
     this.renderer.setRenderTarget(temp);
     this.renderer.render(this.scene, this.camera);
-    
+
     // Update trail uniforms
     this.trailMaterial.uniforms.uCurrentTexture.value = temp.texture;
     this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    
+
     // Render trail effect
     this.renderer.setRenderTarget(this.trailRenderTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
-    
+
     // Update main material with trail
     this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    
+
     // Reset render target
     this.renderer.setRenderTarget(null);
-    
+
     // Clean up
     temp.dispose();
   }
 
   animate() {
     const elapsedTime = this.clock.getElapsedTime();
-    
+
     // Update uniforms
     this.material.uniforms.uTime.value = elapsedTime;
-    
+
     // Update controls
     this.controls.update();
 
