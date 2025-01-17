@@ -60,9 +60,9 @@ class ShaderRenderer {
         uTrailTexture: { value: null },
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
-        uDecay: { value: 0.98 },
+        uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
-        uEffectRadius: { value: 0.25 },
+        uEffectRadius: { value: 0.15 },
       },
       side: THREE.DoubleSide,
     });
