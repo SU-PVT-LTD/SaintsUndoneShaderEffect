@@ -1,33 +1,37 @@
 
 uniform sampler2D uCurrentTexture;
+uniform sampler2D uAccumulatedTexture;
 uniform float uTime;
 uniform vec2 uMouse;
 uniform float uDecay;
+uniform float uIntensity;
 varying vec2 vUv;
 
 void main() {
-    vec2 velocity = uMouse - vUv;
+    vec2 velocity = (uMouse - vUv) * 0.1;
     float dist = length(velocity);
-    velocity = normalize(velocity) * smoothstep(0.5, 0.0, dist);
     
-    vec2 uv = vUv;
-    vec4 sum = vec4(0.0);
-    float blurScale = 0.05;
+    vec4 currentFrame = texture2D(uCurrentTexture, vUv);
+    vec4 accumulation = vec4(0.0);
     
-    for(float i = 0.0; i < 16.0; i++) {
-        float t = i / 16.0;
-        vec2 offset = velocity * (blurScale * t);
-        sum += texture2D(uCurrentTexture, uv - offset);
+    // Sample multiple points along the motion vector
+    const int SAMPLES = 32;
+    for(int i = 0; i < SAMPLES; i++) {
+        float t = float(i) / float(SAMPLES);
+        vec2 offset = velocity * t;
+        vec2 sampleUV = vUv - offset;
+        vec4 sample = texture2D(uAccumulatedTexture, sampleUV);
+        
+        // Apply decay based on sample position
+        float decay = pow(uDecay, t * 10.0);
+        accumulation += sample * decay;
     }
     
-    sum /= 16.0;
-    vec4 current = texture2D(uCurrentTexture, uv);
+    accumulation /= float(SAMPLES);
     
-    float fadeOut = smoothstep(1.0, 0.0, dist * 2.0);
-    float alpha = fadeOut * uDecay;
+    // Blend between current frame and accumulated trail
+    float blendFactor = smoothstep(0.0, 0.5, dist) * uIntensity;
+    vec4 final = mix(currentFrame, accumulation, blendFactor);
     
-    vec4 color = mix(current, sum, alpha);
-    color.a = 1.0;
-    
-    gl_FragColor = color;
+    gl_FragColor = final;
 }

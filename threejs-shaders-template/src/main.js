@@ -1,10 +1,11 @@
+
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "lil-gui";
 import vertexShader from "./shaders/vertex.glsl";
 import fragmentShader from "./shaders/fragment.glsl";
-import trailFragmentShader from "./shaders/trailFragment.glsl";
 import trailVertexShader from "./shaders/trailVertex.glsl";
+import trailFragmentShader from "./shaders/trailFragment.glsl";
 import "./style.css";
 
 class ShaderRenderer {
@@ -13,15 +14,23 @@ class ShaderRenderer {
     this.mouse = new THREE.Vector2();
     this.canvas = document.querySelector("canvas.webgl");
     this.scene = new THREE.Scene();
+    this.clock = new THREE.Clock();
     this.sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
     };
-    this.clock = new THREE.Clock();
 
-    // Create ping-pong buffers
-    this.bufferA = new THREE.WebGLRenderTarget(this.sizes.width, this.sizes.height);
-    this.bufferB = new THREE.WebGLRenderTarget(this.sizes.width, this.sizes.height);
+    // Create accumulation texture
+    this.accumulationRenderTarget = new THREE.WebGLRenderTarget(
+      this.sizes.width,
+      this.sizes.height,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType,
+      }
+    );
 
     this.initGeometry();
     this.initTrailEffect();
@@ -62,38 +71,32 @@ class ShaderRenderer {
   }
 
   initTrailEffect() {
-    // Create two render targets for ping-pong buffering
-    this.renderTargetA = new THREE.WebGLRenderTarget(
-      this.sizes.width,
-      this.sizes.height,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.FloatType
-      }
-    );
-    
-    this.renderTargetB = this.renderTargetA.clone();
-    
     this.trailMaterial = new THREE.ShaderMaterial({
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
+        uAccumulatedTexture: { value: null },
         uCurrentTexture: { value: null },
         uTime: { value: 0 },
-        uMouse: { value: new THREE.Vector2() },
-        uDecay: { value: 0.98 },
+        uMouse: { value: this.mouse },
+        uDecay: { value: 0.95 },
+        uIntensity: { value: 0.8 },
       },
+      blending: THREE.AdditiveBlending,
+      transparent: true,
     });
 
-    this.trailScene = new THREE.Scene();
+    const trailFolder = this.gui.addFolder('Trail Controls');
+    trailFolder.add(this.trailMaterial.uniforms.uDecay, 'value', 0.9, 0.999, 0.001).name('Decay');
+    trailFolder.add(this.trailMaterial.uniforms.uIntensity, 'value', 0, 1, 0.01).name('Intensity');
+
     this.trailQuad = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
       this.trailMaterial
     );
+    
+    this.trailScene = new THREE.Scene();
     this.trailScene.add(this.trailQuad);
-
     this.trailCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   }
 
@@ -131,38 +134,27 @@ class ShaderRenderer {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    this.bufferA.setSize(this.sizes.width, this.sizes.height);
-    this.bufferB.setSize(this.sizes.width, this.sizes.height);
+    
+    this.accumulationRenderTarget.setSize(this.sizes.width, this.sizes.height);
   }
 
   animate() {
     this.controls.update();
-    
-    // Update uniforms
-    this.trailMaterial.uniforms.uTime.value = this.clock.getElapsedTime();
-    this.trailMaterial.uniforms.uMouse.value.set(this.mouse.x, this.mouse.y);
-    
-    // Render scene to current render target
-    this.renderer.setRenderTarget(this.renderTargetA);
+    const elapsedTime = this.clock.getElapsedTime();
+    this.trailMaterial.uniforms.uTime.value = elapsedTime;
+
+    // Render main scene to a texture
+    this.renderer.setRenderTarget(this.accumulationRenderTarget);
     this.renderer.render(this.scene, this.camera);
-    
-    // Update trail material with current frame
-    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderTargetA.texture;
-    
-    // Render trail effect
-    this.renderer.setRenderTarget(this.renderTargetB);
-    this.renderer.render(this.trailScene, this.trailCamera);
-    
-    // Final output to screen
+
+    // Update trail uniforms
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.accumulationRenderTarget.texture;
+    this.trailMaterial.uniforms.uAccumulatedTexture.value = this.accumulationRenderTarget.texture;
+
+    // Final render to screen with trail effect
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.trailScene, this.trailCamera);
-    
-    // Swap render targets
-    const temp = this.renderTargetA;
-    this.renderTargetA = this.renderTargetB;
-    this.renderTargetB = temp;
-    
+
     requestAnimationFrame(() => this.animate());
   }
 
@@ -171,4 +163,4 @@ class ShaderRenderer {
   }
 }
 
-const shaderRenderer = new ShaderRenderer();
+new ShaderRenderer();
