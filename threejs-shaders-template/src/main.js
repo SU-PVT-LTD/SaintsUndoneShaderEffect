@@ -62,14 +62,28 @@ class ShaderRenderer {
   }
 
   initTrailEffect() {
+    // Create two render targets for ping-pong buffering
+    this.renderTargetA = new THREE.WebGLRenderTarget(
+      this.sizes.width,
+      this.sizes.height,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType
+      }
+    );
+    
+    this.renderTargetB = this.renderTargetA.clone();
+    
     this.trailMaterial = new THREE.ShaderMaterial({
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uPreviousTexture: { value: null },
         uCurrentTexture: { value: null },
-        uDecay: { value: 0.95 },
         uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector2() },
+        uDecay: { value: 0.98 },
       },
     });
 
@@ -124,29 +138,31 @@ class ShaderRenderer {
 
   animate() {
     this.controls.update();
-
-    // Render scene to buffer A
-    this.renderer.setRenderTarget(this.bufferA);
-    this.renderer.render(this.scene, this.camera);
-
-    // Update trail uniforms
-    this.trailMaterial.uniforms.uCurrentTexture.value = this.bufferA.texture;
-    this.trailMaterial.uniforms.uPreviousTexture.value = this.bufferB.texture;
+    
+    // Update uniforms
     this.trailMaterial.uniforms.uTime.value = this.clock.getElapsedTime();
-
-    // Render trail effect to buffer B
-    this.renderer.setRenderTarget(this.bufferB);
+    this.trailMaterial.uniforms.uMouse.value.set(this.mouse.x, this.mouse.y);
+    
+    // Render scene to current render target
+    this.renderer.setRenderTarget(this.renderTargetA);
+    this.renderer.render(this.scene, this.camera);
+    
+    // Update trail material with current frame
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderTargetA.texture;
+    
+    // Render trail effect
+    this.renderer.setRenderTarget(this.renderTargetB);
     this.renderer.render(this.trailScene, this.trailCamera);
-
-    // Final render to screen
+    
+    // Final output to screen
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.trailScene, this.trailCamera);
-
-    // Swap buffers
-    const temp = this.bufferA;
-    this.bufferA = this.bufferB;
-    this.bufferB = temp;
-
+    
+    // Swap render targets
+    const temp = this.renderTargetA;
+    this.renderTargetA = this.renderTargetB;
+    this.renderTargetB = temp;
+    
     requestAnimationFrame(() => this.animate());
   }
 
