@@ -38,7 +38,11 @@ void main()
     
     vec3 color;
     if (uProfile == 0) {
-        // Grayscale profile
+        // Original grayscale profile
+        float baseGray = 0.92;
+        vec3 color = vec3(baseGray * (ambient + diffuse * 0.5 + specular * 0.2));
+    } else if (uProfile == 1) {
+        // Enhanced grayscale profile
         vec3 highlightColor = vec3(0.98);
         vec3 shadowColor = vec3(0.75);
         color = mix(shadowColor, highlightColor, ambient * 0.8 + diffuse * 0.6 + specular * 0.3);
