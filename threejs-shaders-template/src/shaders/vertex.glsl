@@ -12,9 +12,11 @@ void main()
     vUv = uv;
     
     // Calculate distance from mouse with smoother transition
-    float dist = distance(vUv, uMouse);
+    vec2 toMouse = uMouse - vUv;
+    float dist = length(toMouse);
     float strength = 1.0 - smoothstep(0.0, uEffectRadius, dist);
-    strength = pow(strength, 2.0); // Sharper falloff
+    strength *= (1.0 + sin(dist * 30.0) * 0.2); // Add ripple effect
+    strength *= (1.0 + sin(uv.x * 20.0 + uv.y * 15.0) * 0.1); // Add noise
     
     // Sample normal map and convert to world space normal
     vec3 normalColor = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;

@@ -8,12 +8,21 @@ uniform float uDecay;
 
 void main()
 {
-    float dist = distance(vUv, uMouse);
-    float strength = 1.0 - smoothstep(0.0, 0.2, dist);
+    vec2 toMouse = uMouse - vUv;
+    float dist = length(toMouse);
+    float angle = atan(toMouse.y, toMouse.x);
+    
+    float strength = 1.0 - smoothstep(0.0, 0.3, dist);
+    strength *= (1.0 + sin(dist * 30.0 + angle * 2.0) * 0.3);
+    strength *= (1.0 + sin(vUv.x * 15.0 + vUv.y * 20.0) * 0.15);
 
-    // Enhanced normal mapping
-    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
-    vec3 mixedNormal = normalize(mix(vNormal, normalMap, strength));
+    // Enhanced normal mapping with fluid distortion
+    vec2 distortedUV = vUv + vec2(
+        cos(angle) * strength * 0.02,
+        sin(angle) * strength * 0.02
+    );
+    vec3 normalMap = texture2D(uNormalMap, distortedUV).rgb * 2.0 - 1.0;
+    vec3 mixedNormal = normalize(mix(vNormal, normalMap, strength * 1.2));
 
     // Enhanced lighting
     vec3 lightDir = normalize(uLightPosition - vPosition);
