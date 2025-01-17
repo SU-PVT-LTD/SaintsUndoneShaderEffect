@@ -1,10 +1,11 @@
+
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import vertexShader from '../shaders/vertex.glsl';
 import fragmentShader from '../shaders/fragment.glsl';
 
-export default function ShaderPlane({ width = window.innerWidth, height = window.innerHeight }) {
+export default function ShaderPlane() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -12,19 +13,14 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
 
     // Scene setup
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 1.5;
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 100);
-    camera.position.set(0, 0, 1.5);
-    scene.add(camera);
-
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new THREE.WebGLRenderer({ 
       canvas: canvasRef.current,
-      antialias: true
+      antialias: true 
     });
-    renderer.setSize(width, height);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     // Lights
@@ -35,53 +31,61 @@ export default function ShaderPlane({ width = window.innerWidth, height = window
     pointLight.position.set(2, 3, 4);
     scene.add(pointLight);
 
-    // Geometry and material
-    const geometry = new THREE.PlaneGeometry(2, 2, 32, 32);
-    const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
-
+    // Create plane with shader material
+    const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
         uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-        uNormalMap: { value: normalMap },
         uLightPosition: { value: pointLight.position },
+        uNormalMap: { value: new THREE.TextureLoader().load('/T_tfilfair_2K_N.png') },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
       },
       side: THREE.DoubleSide,
     });
 
-    const plane = new THREE.Mesh(geometry, material);
-    scene.add(plane);
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
 
     // Controls
     const controls = new OrbitControls(camera, canvasRef.current);
     controls.enableDamping = true;
 
+    // Handle mouse movement
     const handleMouseMove = (event) => {
-      material.uniforms.uMouse.value.x = event.clientX / width;
-      material.uniforms.uMouse.value.y = 1 - event.clientY / height;
+      material.uniforms.uMouse.value.x = event.clientX / window.innerWidth;
+      material.uniforms.uMouse.value.y = 1 - event.clientY / window.innerHeight;
     };
 
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Animation
-    const animate = () => {
+    // Handle resize
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    };
+    }
     animate();
 
-    // Cleanup
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
       geometry.dispose();
       material.dispose();
       renderer.dispose();
     };
-  }, [width, height]);
+  }, []);
 
-  return <canvas ref={canvasRef} />;
+  return <canvas ref={canvasRef} style={{ display: 'block' }} />;
 }
