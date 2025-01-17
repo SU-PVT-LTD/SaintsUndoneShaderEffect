@@ -172,17 +172,19 @@ class ShaderRenderer {
     this.renderer.setRenderTarget(currentRenderTarget);
     this.renderer.render(this.scene, this.camera);
     
-    // Update trail material uniforms
-    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    this.trailMaterial.uniforms.uCurrentTexture.value = currentRenderTarget.texture;
+    // Store previous frame
+    const previousTexture = this.trailRenderTarget.texture.clone();
     
-    // Render trail effect
+    // Render current frame to trail render target
     this.renderer.setRenderTarget(this.trailRenderTarget);
-    this.renderer.render(this.trailScene, this.trailCamera);
-    this.renderer.setRenderTarget(null);
+    this.mesh.material = this.material;
+    this.renderer.render(this.scene, this.camera);
     
-    // Pass the trail texture to main material
-    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    // Update material uniforms with previous frame
+    this.material.uniforms.uTrailTexture.value = previousTexture;
+    
+    // Reset render target
+    this.renderer.setRenderTarget(null);
     
     // Dispose of temporary render target
     currentRenderTarget.dispose();
