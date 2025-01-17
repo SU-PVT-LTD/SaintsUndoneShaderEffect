@@ -79,37 +79,55 @@ class ShaderRenderer {
   }
 
   initTrailRenderTarget() {
-    // Create a render target for storing the trail
-    this.trailRenderTarget = new THREE.WebGLRenderTarget(
+    const rtParams = {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.FloatType,
+    };
+
+    // Create ping-pong buffers for accumulation
+    this.accumulationTargetA = new THREE.WebGLRenderTarget(
       this.sizes.width,
       this.sizes.height,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.FloatType,
-      }
+      rtParams
+    );
+    
+    this.accumulationTargetB = new THREE.WebGLRenderTarget(
+      this.sizes.width,
+      this.sizes.height,
+      rtParams
     );
 
-    // Material for the trail effect
+    // Material for accumulation
     this.trailMaterial = new THREE.ShaderMaterial({
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uTrailTexture: { value: null }, // Previous frame texture
-        uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.95 }, // Decay factor
+        uPreviousTexture: { value: null },
+        uCurrentTexture: { value: null },
+        uMousePos: { value: this.mouse },
+        uAccumulationStrength: { value: 0.95 },
       },
     });
 
-    // Plane for trail rendering
-    this.trailPlane = new THREE.Mesh(this.geometry, this.trailMaterial);
+    // Setup accumulation scene
+    this.trailPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      this.trailMaterial
+    );
     this.trailScene = new THREE.Scene();
     this.trailScene.add(this.trailPlane);
 
-    // Camera for the trail scene
     this.trailCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     this.trailCamera.position.z = 1;
+
+    // Clear initial render targets
+    this.renderer.setRenderTarget(this.accumulationTargetA);
+    this.renderer.clear();
+    this.renderer.setRenderTarget(this.accumulationTargetB);
+    this.renderer.clear();
+    this.renderer.setRenderTarget(null);
   }
 
   initCamera() {
@@ -165,34 +183,25 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    const currentRenderTarget = new THREE.WebGLRenderTarget(
-      this.sizes.width,
-      this.sizes.height,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-      }
-    );
+    // Ping-pong between render targets
+    const currentTarget = this.accumulationTargetA;
+    const previousTarget = this.accumulationTargetB;
 
-    // Render current frame
-    this.renderer.setRenderTarget(currentRenderTarget);
-    this.renderer.render(this.scene, this.camera);
-    
-    // Update trail material uniforms
-    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    this.trailMaterial.uniforms.uCurrentTexture.value = currentRenderTarget.texture;
+    // Update uniforms
+    this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
+    this.trailMaterial.uniforms.uMousePos.value = this.mouse;
 
-    // Render trail
-    this.renderer.setRenderTarget(this.trailRenderTarget);
+    // Render accumulation
+    this.renderer.setRenderTarget(currentTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
     this.renderer.setRenderTarget(null);
 
     // Update main material
-    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    
-    // Cleanup
-    currentRenderTarget.dispose();
+    this.material.uniforms.uTrailTexture.value = currentTarget.texture;
+
+    // Swap buffers
+    [this.accumulationTargetA, this.accumulationTargetB] = 
+    [this.accumulationTargetB, this.accumulationTargetA];
   }
 
   animate() {

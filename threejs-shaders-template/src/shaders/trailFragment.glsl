@@ -1,15 +1,25 @@
 
-uniform sampler2D uTrailTexture;
-uniform sampler2D uCurrentTexture;
+uniform sampler2D uPreviousTexture;
+uniform vec2 uMousePos;
+uniform float uAccumulationStrength;
 varying vec2 vUv;
 
 void main() {
-    vec4 previous = texture2D(uTrailTexture, vUv);
-    vec4 current = texture2D(uCurrentTexture, vUv);
+    vec4 prevColor = texture2D(uPreviousTexture, vUv);
     
-    // Store the maximum alpha value
-    float alpha = max(previous.a, current.a);
+    // Calculate distance to mouse
+    float dist = distance(vUv, uMousePos);
+    float strength = 1.0 - smoothstep(0.0, 0.1, dist);
     
-    // Output the result with accumulated alpha
-    gl_FragColor = vec4(current.rgb, alpha);
+    // Create new color based on mouse position
+    vec4 newColor = vec4(1.0, 1.0, 1.0, strength);
+    
+    // Blend with previous frame
+    vec4 accumulated = mix(
+        prevColor * uAccumulationStrength,
+        max(newColor, prevColor),
+        strength
+    );
+    
+    gl_FragColor = accumulated;
 }

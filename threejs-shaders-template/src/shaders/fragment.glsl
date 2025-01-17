@@ -9,15 +9,9 @@ uniform sampler2D uTrailTexture;
 
 void main()
 {
-    // Get the accumulated reveal mask
-    vec4 revealMask = texture2D(uTrailTexture, vUv);
-    
-    // Calculate current mouse influence
-    float dist = distance(vUv, uMouse);
-    float currentStrength = 1.0 - smoothstep(0.0, 0.2, dist);
-    
-    // Use the maximum between current and previous reveal
-    float finalStrength = max(currentStrength, revealMask.r);
+    // Get accumulated mask from trail texture
+    vec4 accumulation = texture2D(uTrailTexture, vUv);
+    float finalStrength = accumulation.r;
 
     // Apply reveal mask more strongly
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
