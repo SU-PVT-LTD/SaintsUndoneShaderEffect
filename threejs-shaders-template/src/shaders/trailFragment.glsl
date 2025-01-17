@@ -8,9 +8,12 @@ void main() {
     vec4 previous = texture2D(uTrailTexture, vUv);
     vec4 current = texture2D(uCurrentTexture, vUv);
     
-    // Exponential decay for smoother fade
-    float decay = pow(uDecay, 2.0);
-    vec4 blended = mix(previous * decay, current, 0.1);
+    // More pronounced trail effect
+    float decay = pow(uDecay, 1.5);
+    vec4 blended = mix(previous * decay, current, 0.15);
+    
+    // Ensure minimum opacity
+    blended.a = max(blended.a, 0.1);
     
     gl_FragColor = blended;
 }
