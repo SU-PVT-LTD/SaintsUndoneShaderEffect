@@ -45,7 +45,7 @@ class ShaderRenderer {
 
     // Light
     this.light = new THREE.PointLight(0xffffff, 1);
-    this.light.position.set(2, 2, 3);
+    this.light.position.set(3, 3, 4);
     this.scene.add(this.light);
 
     // Normal Map Texture

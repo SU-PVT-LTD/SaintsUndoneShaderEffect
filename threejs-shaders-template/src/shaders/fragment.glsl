@@ -25,11 +25,17 @@ void main()
     vec3 viewDir = normalize(-vPosition);
     vec3 halfDir = normalize(lightDir + viewDir);
 
-    float diffuse = max(dot(mixedNormal, lightDir), 0.0);
-    float specular = pow(max(dot(mixedNormal, halfDir), 0.0), 32.0);
-
-    float ambient = 0.3;
-    vec3 color = vec3(0.722) * (ambient + diffuse + specular * 0.5);
+    // Softer diffuse lighting with smoother falloff
+    float diffuse = smoothstep(0.0, 1.0, max(dot(mixedNormal, lightDir), 0.0));
+    
+    // Softer specular with wider spread
+    float specular = pow(max(dot(mixedNormal, halfDir), 0.0), 16.0) * 0.3;
+    
+    // Increased ambient light for softer shadows
+    float ambient = 0.5;
+    
+    // Blend the components with adjusted weights
+    vec3 color = vec3(0.85) * (ambient + diffuse * 0.7 + specular);
 
     gl_FragColor = vec4(color, 1.0);
 }
