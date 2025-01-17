@@ -30,10 +30,10 @@ class ShaderRenderer {
     // Time
     this.clock = new THREE.Clock();
 
+    this.initRenderer();
     this.initGeometry();
     this.initTrailRenderTarget();
     this.initCamera();
-    this.initRenderer();
     this.initControls();
     this.initEventListeners();
     this.startAnimationLoop();
@@ -178,8 +178,9 @@ class ShaderRenderer {
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Update trail render target
-    this.trailRenderTarget.setSize(this.sizes.width, this.sizes.height);
+    // Update trail render targets
+    this.accumulationTargetA.setSize(this.sizes.width, this.sizes.height);
+    this.accumulationTargetB.setSize(this.sizes.width, this.sizes.height);
   }
 
   updateTrailTexture() {
