@@ -7,7 +7,7 @@ uniform sampler2D uNormalMap;
 uniform vec3 uLightPosition;
 uniform sampler2D uTrailTexture;
 
-uniform int uProfile; // 0 for grayscale, 1 for colored
+uniform int uProfile; // 0 for grayscale, 1 for colored, 2 for original white
 
 void main()
 {
@@ -42,7 +42,7 @@ void main()
         vec3 highlightColor = vec3(0.98);
         vec3 shadowColor = vec3(0.75);
         color = mix(shadowColor, highlightColor, ambient * 0.8 + diffuse * 0.6 + specular * 0.3);
-    } else {
+    } else if (uProfile == 1) {
         // Colored profile
         vec3 baseColor = mix(
             vec3(0.1, 0.2, 0.4),  // Dark blue
@@ -51,6 +51,9 @@ void main()
         );
         vec3 glowColor = vec3(0.6, 0.4, 1.0) * specular;
         color = baseColor * (ambient + diffuse * 0.7) + glowColor;
+    } else {
+        // Original white profile
+        color = vec3(0.85) * (ambient + diffuse * 0.7 + specular);
     }
     
     gl_FragColor = vec4(color, 1.0);
