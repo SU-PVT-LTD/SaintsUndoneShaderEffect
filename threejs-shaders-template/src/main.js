@@ -95,11 +95,13 @@ class ShaderRenderer {
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uTrailTexture: { value: null }, // Previous frame texture
-        uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.95 }, // Decay factor
-        uTime: { value: 0.0 }, // Time for animation
+        uTrailTexture: { value: null },
+        uCurrentTexture: { value: null },
+        uDecay: { value: 0.98 },
+        uTime: { value: 0.0 },
       },
+      transparent: true,
+      blending: THREE.AdditiveBlending,
     });
 
     // Plane for trail rendering

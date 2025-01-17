@@ -1,3 +1,4 @@
+
 uniform sampler2D uTrailTexture;
 uniform sampler2D uCurrentTexture;
 uniform float uDecay;
@@ -8,12 +9,18 @@ void main() {
     vec4 current = texture2D(uCurrentTexture, vUv);
     vec4 previous = texture2D(uTrailTexture, vUv);
     
-    // Apply time-based decay
-    float decay = uDecay * (0.95 + 0.05 * sin(uTime));
-    vec4 blended = mix(previous, current, 1.0 - decay);
+    // Enhanced trail effect
+    float trailStrength = max(previous.r, max(previous.g, previous.b));
+    trailStrength = pow(trailStrength * uDecay, 0.5) * 2.0;
     
-    // Add fade out effect
-    blended *= 0.98;
+    // Smoother blend between frames
+    vec4 trail = mix(previous, current, 0.2);
+    trail *= 0.98; // Subtle fade out
     
-    gl_FragColor = blended;
+    // Add time-based modulation for more organic feel
+    float modulation = 0.97 + 0.03 * sin(uTime * 0.5);
+    trail *= modulation;
+    
+    // Apply trail strength
+    gl_FragColor = vec4(trail.rgb * trailStrength, 1.0);
 }
