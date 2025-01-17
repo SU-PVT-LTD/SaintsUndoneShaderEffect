@@ -164,16 +164,34 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Render the trail scene to the trail render target
-    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderer.readRenderTargetPixels;
+    const currentRenderTarget = new THREE.WebGLRenderTarget(
+      this.sizes.width,
+      this.sizes.height,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+      }
+    );
 
+    // Render current frame
+    this.renderer.setRenderTarget(currentRenderTarget);
+    this.renderer.render(this.scene, this.camera);
+    
+    // Update trail material uniforms
+    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    this.trailMaterial.uniforms.uCurrentTexture.value = currentRenderTarget.texture;
+
+    // Render trail
     this.renderer.setRenderTarget(this.trailRenderTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
     this.renderer.setRenderTarget(null);
 
-    // Pass the updated trail texture to the main shader
+    // Update main material
     this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    
+    // Cleanup
+    currentRenderTarget.dispose();
   }
 
   animate() {
