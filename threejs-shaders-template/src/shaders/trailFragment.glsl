@@ -1,24 +1,40 @@
 
-uniform sampler2D uCurrentTexture;
 uniform sampler2D uAccumulatedTexture;
-uniform float uTime;
 uniform vec2 uMouse;
 uniform float uDecay;
 uniform float uIntensity;
+uniform float uTime;
+
 varying vec2 vUv;
 
 void main() {
-    vec4 previous = texture2D(uAccumulatedTexture, vUv);
+    // Calculate velocity based on distance to mouse
+    vec2 toMouse = uMouse - vUv;
+    float dist = length(toMouse);
+    vec2 velocity = toMouse * smoothstep(0.5, 0.0, dist) * 0.1;
     
-    // Calculate distance to mouse
-    float dist = length(uMouse - vUv);
-    float mouseMask = smoothstep(0.05, 0.0, dist);
+    // Accumulate samples along velocity vector
+    vec4 accumulation = vec4(0.0);
+    float totalWeight = 0.0;
     
-    // Create trail effect
-    vec4 mouseGlow = vec4(1.0, 1.0, 1.0, 1.0) * mouseMask * uIntensity;
+    const int TRAIL_STEPS = 16;
+    for(int i = 0; i < TRAIL_STEPS; i++) {
+        float t = float(i) / float(TRAIL_STEPS - 1);
+        vec2 offset = velocity * t;
+        vec2 samplePos = vUv - offset;
+        
+        float weight = 1.0 - t;
+        weight *= weight;
+        
+        accumulation += texture2D(uAccumulatedTexture, samplePos) * weight;
+        totalWeight += weight;
+    }
     
-    // Add new position to previous frame with decay
-    vec4 trail = previous * uDecay + mouseGlow;
+    accumulation /= totalWeight;
     
-    gl_FragColor = trail;
+    // Add current mouse position glow
+    float mouseGlow = smoothstep(0.1, 0.0, dist) * uIntensity;
+    vec4 color = max(accumulation * uDecay, vec4(mouseGlow));
+    
+    gl_FragColor = color;
 }
