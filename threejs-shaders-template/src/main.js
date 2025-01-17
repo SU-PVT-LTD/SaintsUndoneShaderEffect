@@ -76,24 +76,6 @@ class ShaderRenderer {
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
-
-    // Trail effect controls
-    const trailFolder = this.gui.addFolder('Fluid Controls');
-    this.trailParams = {
-      turbulenceScale: 8.0,
-      turbulenceSpeed: 0.1,
-      edgeNoiseScale: 20.0,
-      edgeNoiseAmount: 0.2,
-      swirlAmount: 0.02,
-      accumStrength: 0.98
-    };
-    
-    trailFolder.add(this.trailParams, 'turbulenceScale', 1.0, 20.0, 0.1).onChange(() => this.updateTrailUniforms());
-    trailFolder.add(this.trailParams, 'turbulenceSpeed', 0.0, 1.0, 0.01).onChange(() => this.updateTrailUniforms());
-    trailFolder.add(this.trailParams, 'edgeNoiseScale', 1.0, 40.0, 0.1).onChange(() => this.updateTrailUniforms());
-    trailFolder.add(this.trailParams, 'edgeNoiseAmount', 0.0, 1.0, 0.01).onChange(() => this.updateTrailUniforms());
-    trailFolder.add(this.trailParams, 'swirlAmount', 0.0, 0.1, 0.001).onChange(() => this.updateTrailUniforms());
-    trailFolder.add(this.trailParams, 'accumStrength', 0.8, 0.999, 0.001).onChange(() => this.updateTrailUniforms());
   }
 
   initTrailRenderTarget() {
@@ -199,15 +181,6 @@ class ShaderRenderer {
     // Update trail render targets
     this.accumulationTargetA.setSize(this.sizes.width, this.sizes.height);
     this.accumulationTargetB.setSize(this.sizes.width, this.sizes.height);
-  }
-
-  updateTrailUniforms() {
-    this.trailMaterial.uniforms.uTurbulenceScale = { value: this.trailParams.turbulenceScale };
-    this.trailMaterial.uniforms.uTurbulenceSpeed = { value: this.trailParams.turbulenceSpeed };
-    this.trailMaterial.uniforms.uEdgeNoiseScale = { value: this.trailParams.edgeNoiseScale };
-    this.trailMaterial.uniforms.uEdgeNoiseAmount = { value: this.trailParams.edgeNoiseAmount };
-    this.trailMaterial.uniforms.uSwirlAmount = { value: this.trailParams.swirlAmount };
-    this.trailMaterial.uniforms.uAccumulationStrength.value = this.trailParams.accumStrength;
   }
 
   updateTrailTexture() {
