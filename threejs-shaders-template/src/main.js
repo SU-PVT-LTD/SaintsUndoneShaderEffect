@@ -156,20 +156,26 @@ class ShaderRenderer {
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
     
-    // Draw to reveal map
-    const revealScene = new THREE.Scene();
-    const brushGeometry = new THREE.CircleGeometry(0.05, 32);
-    const brushMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const brush = new THREE.Mesh(brushGeometry, brushMaterial);
-    
-    brush.position.set(this.mouse.x * 2 - 1, this.mouse.y * 2 - 1, 0);
-    revealScene.add(brush);
-    
-    this.renderer.setRenderTarget(this.revealRenderTarget);
-    this.renderer.autoClear = false;
-    this.renderer.render(revealScene, this.camera);
-    this.renderer.setRenderTarget(null);
-    this.renderer.autoClear = true;
+    if (event.buttons > 0) { // Only reveal when mouse button is pressed
+      // Draw to reveal map
+      const revealScene = new THREE.Scene();
+      const brushGeometry = new THREE.CircleGeometry(0.05, 32);
+      const brushMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.1 // Gentle reveal effect
+      });
+      const brush = new THREE.Mesh(brushGeometry, brushMaterial);
+      
+      brush.position.set(this.mouse.x * 2 - 1, this.mouse.y * 2 - 1, 0);
+      revealScene.add(brush);
+      
+      this.renderer.setRenderTarget(this.revealRenderTarget);
+      this.renderer.autoClear = false;
+      this.renderer.render(revealScene, this.camera);
+      this.renderer.setRenderTarget(null);
+      this.renderer.autoClear = true;
+    }
   }
 
   handleResize() {

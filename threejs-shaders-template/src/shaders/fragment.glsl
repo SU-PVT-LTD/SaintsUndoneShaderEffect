@@ -10,6 +10,7 @@ uniform sampler2D uRevealMap;
 void main()
 {
     float revealValue = texture2D(uRevealMap, vUv).r;
+    revealValue = smoothstep(0.0, 1.0, revealValue); // Smooth out the reveal effect
 
     // Enhanced normal mapping
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
