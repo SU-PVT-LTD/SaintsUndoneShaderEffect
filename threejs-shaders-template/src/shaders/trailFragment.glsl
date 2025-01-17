@@ -56,14 +56,15 @@ void main() {
     // Sample previous color with swirl offset
     vec4 swirlPrev = texture2D(uPreviousTexture, vUv + swirl);
     
-    // Create new color with organic falloff
-    vec4 newColor = vec4(1.0, 1.0, 1.0, strength);
+    // Create subtle grayscale gradient
+    float colorValue = 0.85 + (turbulence * 0.15);
+    vec4 newColor = vec4(vec3(colorValue), strength);
     
-    // Blend with previous frame
+    // Blend with previous frame using softer mix
     vec4 accumulated = mix(
         swirlPrev * uAccumulationStrength,
-        max(newColor, swirlPrev),
-        strength * 0.7
+        max(newColor * 0.95, swirlPrev),
+        strength * 0.6
     );
     
     gl_FragColor = accumulated;
