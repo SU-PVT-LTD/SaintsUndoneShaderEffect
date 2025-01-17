@@ -80,16 +80,23 @@ class ShaderRenderer {
   }
 
   initTrailRenderTarget() {
-    // Create a render target for storing the trail
-    this.trailRenderTarget = new THREE.WebGLRenderTarget(
-      this.sizes.width,
-      this.sizes.height,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-      }
-    );
+    // Create multiple render targets for frame storage
+    this.frameCount = 10; // Number of frames to store
+    this.frameBuffers = [];
+    for (let i = 0; i < this.frameCount; i++) {
+      this.frameBuffers.push(
+        new THREE.WebGLRenderTarget(
+          this.sizes.width,
+          this.sizes.height,
+          {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat,
+          }
+        )
+      );
+    }
+    this.currentFrame = 0;
 
     // Material for the trail effect
     this.trailMaterial = new THREE.ShaderMaterial({
@@ -165,29 +172,19 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Swap render targets for ping-pong effect
-    const temp = this.trailRenderTarget.clone();
-
-    // Render the current scene to temp target
-    this.renderer.setRenderTarget(temp);
+    // Render current frame
+    this.renderer.setRenderTarget(this.frameBuffers[this.currentFrame]);
     this.renderer.render(this.scene, this.camera);
 
-    // Update trail uniforms
-    this.trailMaterial.uniforms.uCurrentTexture.value = temp.texture;
-    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-
-    // Render trail effect
-    this.renderer.setRenderTarget(this.trailRenderTarget);
-    this.renderer.render(this.trailScene, this.trailCamera);
-
-    // Update main material with trail
-    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    // Update material uniforms with all frames
+    this.material.uniforms.uFrameTextures = { value: this.frameBuffers.map(fb => fb.texture) };
+    this.material.uniforms.uCurrentFrame = { value: this.currentFrame };
+    
+    // Move to next frame
+    this.currentFrame = (this.currentFrame + 1) % this.frameCount;
 
     // Reset render target
     this.renderer.setRenderTarget(null);
-
-    // Clean up
-    temp.dispose();
   }
 
   animate() {
