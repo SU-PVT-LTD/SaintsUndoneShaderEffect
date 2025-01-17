@@ -1,17 +1,14 @@
-uniform sampler2D uAccumulatedTexture;
-uniform vec2 uMouse;
+uniform sampler2D uTrailTexture;
+uniform sampler2D uCurrentTexture;
 uniform float uDecay;
-uniform float uIntensity;
-
 varying vec2 vUv;
 
 void main() {
-    vec4 current = texture2D(uAccumulatedTexture, vUv);
-    float dist = length(uMouse - vUv);
-    float mouseMask = smoothstep(0.05, 0.0, dist);
+    vec4 previous = texture2D(uTrailTexture, vUv); // Previous frame
+    vec4 current = texture2D(uCurrentTexture, vUv); // Current frame
 
-    vec4 mouseColor = vec4(0.0, 0.3, 1.0, 1.0) * mouseMask * uIntensity;
-    vec4 trail = current * uDecay + mouseColor;
+    // Blend the previous frame with the current frame
+    vec4 blended = mix(previous, current, 1.0 - uDecay);
 
-    gl_FragColor = trail;
+    gl_FragColor = blended;
 }

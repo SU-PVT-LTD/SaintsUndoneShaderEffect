@@ -10,9 +10,15 @@ void main()
 {
     float dist = distance(vUv, uMouse);
     float strength = 1.0 - smoothstep(0.0, 0.2, dist);
+    
+    // Add turbulence
+    float time = uDecay * 10.0;
+    float turbulence = sin(dist * 40.0 + time) * 0.05;
+    strength *= (1.0 + turbulence);
 
-    // Enhanced normal mapping
-    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
+    // Enhanced normal mapping with fluid effect
+    vec2 distortedUv = vUv + vec2(turbulence * 0.1);
+    vec3 normalMap = texture2D(uNormalMap, distortedUv).rgb * 2.0 - 1.0;
     vec3 mixedNormal = normalize(mix(vNormal, normalMap, strength));
 
     // Enhanced lighting
