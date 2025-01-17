@@ -95,10 +95,9 @@ class ShaderRenderer {
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uTrailTexture: { value: null },
-        uCurrentTexture: { value: null },
-        uDecay: { value: 0.98 },
-        uResolution: { value: new THREE.Vector2(this.sizes.width, this.sizes.height) },
+        uTrailTexture: { value: null }, // Previous frame texture
+        uCurrentTexture: { value: null }, // Current frame texture
+        uDecay: { value: 0.95 }, // Decay factor
       },
     });
 
@@ -160,32 +159,21 @@ class ShaderRenderer {
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Update trail render target and uniforms
+    // Update trail render target
     this.trailRenderTarget.setSize(this.sizes.width, this.sizes.height);
-    this.trailMaterial.uniforms.uResolution.value.set(this.sizes.width, this.sizes.height);
   }
 
   updateTrailTexture() {
-    // Create a render target for the current frame
-    const currentRenderTarget = this.trailRenderTarget.clone();
-    
-    // Render current frame
-    this.renderer.setRenderTarget(currentRenderTarget);
-    this.renderer.render(this.scene, this.camera);
-    
-    // Update trail material uniforms
+    // Render the trail scene to the trail render target
     this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
-    this.trailMaterial.uniforms.uCurrentTexture.value = currentRenderTarget.texture;
-    
-    // Render trail
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderer.readRenderTargetPixels;
+
     this.renderer.setRenderTarget(this.trailRenderTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
-    
-    // Render to screen
     this.renderer.setRenderTarget(null);
-    
-    // Clean up
-    currentRenderTarget.dispose();
+
+    // Pass the updated trail texture to the main shader
+    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
   }
 
   animate() {
