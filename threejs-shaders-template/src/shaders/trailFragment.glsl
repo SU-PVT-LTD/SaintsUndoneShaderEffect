@@ -1,29 +1,37 @@
 
-uniform sampler2D uTrailTexture;
-uniform sampler2D uCurrentTexture; 
+uniform sampler2D uPreviousTexture;
+uniform sampler2D uCurrentTexture;
 uniform float uDecay;
 uniform float uTime;
 varying vec2 vUv;
 
 void main() {
+    // Sample current and previous frame
     vec4 current = texture2D(uCurrentTexture, vUv);
-    vec4 previous = texture2D(uTrailTexture, vUv);
     
-    // Calculate motion offset
-    vec2 offset = vec2(
-        sin(uTime * 0.5 + vUv.y * 3.0) * 0.003,
-        cos(uTime * 0.5 + vUv.x * 3.0) * 0.003
+    // Add motion blur effect
+    vec2 velocity = vec2(
+        sin(uTime + vUv.y * 4.0) * 0.001,
+        cos(uTime + vUv.x * 4.0) * 0.001
     );
     
-    // Sample previous frame with offset
-    vec4 offsetPrevious = texture2D(uTrailTexture, vUv + offset);
+    vec4 previous = vec4(0.0);
+    float samples = 5.0;
     
-    // Calculate trail strength
-    float strength = max(offsetPrevious.r, max(offsetPrevious.g, offsetPrevious.b));
-    strength *= uDecay;
+    // Accumulate samples with motion blur
+    for(float i = 0.0; i < samples; i++) {
+        vec2 offset = velocity * (i / samples);
+        previous += texture2D(uPreviousTexture, vUv + offset);
+    }
+    previous /= samples;
     
-    // Blend between current and previous
-    vec4 trail = mix(current, offsetPrevious, strength);
+    // Blend current frame with previous frames
+    float blend = uDecay;
+    vec4 color = mix(current, previous, blend);
     
-    gl_FragColor = vec4(trail.rgb, 1.0);
+    // Add subtle glow
+    float brightness = max(color.r, max(color.g, color.b));
+    color.rgb += color.rgb * brightness * 0.2;
+    
+    gl_FragColor = color;
 }
