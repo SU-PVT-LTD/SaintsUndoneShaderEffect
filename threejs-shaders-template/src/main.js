@@ -48,30 +48,19 @@ class ShaderRenderer {
     this.light.position.set(2, 2, 3);
     this.scene.add(this.light);
 
-    // Create reveal map render target
-    this.revealRenderTarget = new THREE.WebGLRenderTarget(
-      1024,
-      1024,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RedFormat,
-        type: THREE.FloatType
-      }
-    );
-
     // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
-
+    
     // Material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       uniforms: {
         uMouse: { value: this.mouse },
-        uRevealMap: { value: this.revealRenderTarget.texture },
+        uTrailTexture: { value: null },
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
+        uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
       },
@@ -155,27 +144,6 @@ class ShaderRenderer {
   handleMouseMove(event) {
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
-
-    if (event.buttons > 0) { // Only reveal when mouse button is pressed
-      // Draw to reveal map
-      const revealScene = new THREE.Scene();
-      const brushGeometry = new THREE.CircleGeometry(0.05, 32);
-      const brushMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.1 // Gentle reveal effect
-      });
-      const brush = new THREE.Mesh(brushGeometry, brushMaterial);
-
-      brush.position.set(this.mouse.x * 2 - 1, this.mouse.y * 2 - 1, 0);
-      revealScene.add(brush);
-
-      this.renderer.setRenderTarget(this.revealRenderTarget);
-      this.renderer.autoClear = false;
-      this.renderer.render(revealScene, this.camera);
-      this.renderer.setRenderTarget(null);
-      this.renderer.autoClear = true;
-    }
   }
 
   handleResize() {
@@ -196,24 +164,16 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Create a temporary render target for the current frame
-    const currentRenderTarget = this.trailRenderTarget.clone();
-
-    // Render current frame
-    this.renderer.setRenderTarget(currentRenderTarget);
-    this.renderer.render(this.scene, this.camera);
-
-    // Update trail material uniforms
-    this.trailMaterial.uniforms.uCurrentTexture.value = currentRenderTarget.texture;
+    // Render the trail scene to the trail render target
     this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderer.readRenderTargetPixels;
 
-    // Render trail effect
     this.renderer.setRenderTarget(this.trailRenderTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
     this.renderer.setRenderTarget(null);
 
-    // Cleanup
-    currentRenderTarget.dispose();
+    // Pass the updated trail texture to the main shader
+    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
   }
 
   animate() {
