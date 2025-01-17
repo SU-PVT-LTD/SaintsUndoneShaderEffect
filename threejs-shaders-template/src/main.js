@@ -50,7 +50,7 @@ class ShaderRenderer {
 
     // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
-
+    
     // Material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
@@ -63,7 +63,6 @@ class ShaderRenderer {
         uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
-        uTime: { value: 0 },
       },
       side: THREE.DoubleSide,
     });
@@ -80,23 +79,16 @@ class ShaderRenderer {
   }
 
   initTrailRenderTarget() {
-    // Create multiple render targets for frame storage
-    this.frameCount = 10; // Number of frames to store
-    this.frameBuffers = [];
-    for (let i = 0; i < this.frameCount; i++) {
-      this.frameBuffers.push(
-        new THREE.WebGLRenderTarget(
-          this.sizes.width,
-          this.sizes.height,
-          {
-            minFilter: THREE.LinearFilter,
-            magFilter: THREE.LinearFilter,
-            format: THREE.RGBAFormat,
-          }
-        )
-      );
-    }
-    this.currentFrame = 0;
+    // Create a render target for storing the trail
+    this.trailRenderTarget = new THREE.WebGLRenderTarget(
+      this.sizes.width,
+      this.sizes.height,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+      }
+    );
 
     // Material for the trail effect
     this.trailMaterial = new THREE.ShaderMaterial({
@@ -105,7 +97,7 @@ class ShaderRenderer {
       uniforms: {
         uTrailTexture: { value: null }, // Previous frame texture
         uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.96 }, // Decay factor
+        uDecay: { value: 0.95 }, // Decay factor
       },
     });
 
@@ -172,27 +164,19 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Render current frame
-    this.renderer.setRenderTarget(this.frameBuffers[this.currentFrame]);
-    this.renderer.render(this.scene, this.camera);
+    // Render the trail scene to the trail render target
+    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.renderer.readRenderTargetPixels;
 
-    // Update material uniforms with all frames
-    this.material.uniforms.uFrameTextures = { value: this.frameBuffers.map(fb => fb.texture) };
-    this.material.uniforms.uCurrentFrame = { value: this.currentFrame };
-    
-    // Move to next frame
-    this.currentFrame = (this.currentFrame + 1) % this.frameCount;
-
-    // Reset render target
+    this.renderer.setRenderTarget(this.trailRenderTarget);
+    this.renderer.render(this.trailScene, this.trailCamera);
     this.renderer.setRenderTarget(null);
+
+    // Pass the updated trail texture to the main shader
+    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
   }
 
   animate() {
-    const elapsedTime = this.clock.getElapsedTime();
-
-    // Update uniforms
-    this.material.uniforms.uTime.value = elapsedTime;
-
     // Update controls
     this.controls.update();
 
