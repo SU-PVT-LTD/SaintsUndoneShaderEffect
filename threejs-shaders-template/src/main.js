@@ -61,6 +61,8 @@ class ShaderRenderer {
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
         uDecay: { value: 0.95 },
+        uDisplacementStrength: { value: 0.05 },
+        uEffectRadius: { value: 0.2 },
       },
       side: THREE.DoubleSide,
     });
@@ -70,7 +72,10 @@ class ShaderRenderer {
     this.scene.add(this.mesh);
 
     // Debug controls
-    this.gui.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
+    const effectFolder = this.gui.addFolder('Effect Controls');
+    effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
+    effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
+    effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
   }
 
   initTrailRenderTarget() {
