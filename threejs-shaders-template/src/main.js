@@ -95,9 +95,10 @@ class ShaderRenderer {
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
-        uTrailTexture: { value: null }, // Previous frame texture
-        uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.95 }, // Decay factor
+        uTrailTexture: { value: null },
+        uCurrentTexture: { value: null },
+        uDecay: { value: 0.98 },
+        uResolution: { value: new THREE.Vector2(this.sizes.width, this.sizes.height) },
       },
     });
 
@@ -159,8 +160,9 @@ class ShaderRenderer {
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Update trail render target
+    // Update trail render target and uniforms
     this.trailRenderTarget.setSize(this.sizes.width, this.sizes.height);
+    this.trailMaterial.uniforms.uResolution.value.set(this.sizes.width, this.sizes.height);
   }
 
   updateTrailTexture() {
