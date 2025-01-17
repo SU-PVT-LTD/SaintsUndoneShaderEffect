@@ -108,8 +108,21 @@ class ShaderRenderer {
         uCurrentTexture: { value: null },
         uMousePos: { value: this.mouse },
         uAccumulationStrength: { value: 0.98 },
+        uTurbulenceScale: { value: 8.0 },
+        uTurbulenceStrength: { value: 0.15 },
+        uEdgeSharpness: { value: 0.15 },
+        uSwirlStrength: { value: 0.02 },
+        uTime: { value: 0.0 }
       },
     });
+
+    // Add GUI controls for fluid effects
+    const fluidFolder = this.gui.addFolder('Fluid Controls');
+    fluidFolder.add(this.trailMaterial.uniforms.uTurbulenceScale, 'value', 1.0, 20.0, 0.1).name('Turbulence Scale');
+    fluidFolder.add(this.trailMaterial.uniforms.uTurbulenceStrength, 'value', 0.0, 0.5, 0.01).name('Turbulence Strength');
+    fluidFolder.add(this.trailMaterial.uniforms.uEdgeSharpness, 'value', 0.01, 0.3, 0.01).name('Edge Sharpness');
+    fluidFolder.add(this.trailMaterial.uniforms.uSwirlStrength, 'value', 0.0, 0.1, 0.001).name('Swirl Strength');
+    fluidFolder.add(this.trailMaterial.uniforms.uAccumulationStrength, 'value', 0.9, 0.999, 0.001).name('Trail Persistence');
 
     // Setup accumulation scene
     this.trailPlane = new THREE.Mesh(
@@ -184,6 +197,9 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
+    // Update time uniform
+    this.trailMaterial.uniforms.uTime.value += 0.01;
+    
     // Ping-pong between render targets
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;

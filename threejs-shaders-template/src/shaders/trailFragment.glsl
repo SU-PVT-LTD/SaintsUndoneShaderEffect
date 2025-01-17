@@ -2,6 +2,11 @@
 uniform sampler2D uPreviousTexture;
 uniform vec2 uMousePos;
 uniform float uAccumulationStrength;
+uniform float uTurbulenceScale;
+uniform float uTurbulenceStrength;
+uniform float uEdgeSharpness;
+uniform float uSwirlStrength;
+uniform float uTime;
 varying vec2 vUv;
 
 // Noise functions
