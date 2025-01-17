@@ -1,6 +1,6 @@
 
 uniform sampler2D uTrailTexture;
-uniform sampler2D uCurrentTexture;
+uniform sampler2D uCurrentTexture; 
 uniform float uDecay;
 uniform float uTime;
 varying vec2 vUv;
@@ -9,23 +9,21 @@ void main() {
     vec4 current = texture2D(uCurrentTexture, vUv);
     vec4 previous = texture2D(uTrailTexture, vUv);
     
-    // Enhanced embossed trail effect
-    float trailStrength = max(previous.r, max(previous.g, previous.b));
+    // Calculate motion offset
+    vec2 offset = vec2(
+        sin(uTime * 0.5 + vUv.y * 3.0) * 0.003,
+        cos(uTime * 0.5 + vUv.x * 3.0) * 0.003
+    );
     
-    // Stronger decay for more pronounced trail fade
-    float decay = pow(uDecay, 1.5);
-    trailStrength *= decay;
+    // Sample previous frame with offset
+    vec4 offsetPrevious = texture2D(uTrailTexture, vUv + offset);
     
-    // Smoother blend between frames
-    vec4 trail = mix(previous, current, 0.15);
+    // Calculate trail strength
+    float strength = max(offsetPrevious.r, max(offsetPrevious.g, offsetPrevious.b));
+    strength *= uDecay;
     
-    // Add subtle wave movement
-    float wave = sin(uTime * 0.5 + vUv.x * 3.0) * 0.02;
-    trail.rgb += vec3(wave);
+    // Blend between current and previous
+    vec4 trail = mix(current, offsetPrevious, strength);
     
-    // Enhance brightness of active areas
-    float brightness = smoothstep(0.2, 0.8, trailStrength);
-    trail.rgb *= (1.0 + brightness * 0.5);
-    
-    gl_FragColor = vec4(trail.rgb * trailStrength, 1.0);
+    gl_FragColor = vec4(trail.rgb, 1.0);
 }
