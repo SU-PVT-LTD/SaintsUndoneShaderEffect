@@ -34,11 +34,11 @@ void main()
     // Increased ambient light for softer shadows
     float ambient = 0.5;
     
-    // Create subtle grayscale gradient with more depth
+    // Create subtle grayscale gradient with deeper shadows
     float baseGray = 0.92;
     vec3 highlightColor = vec3(0.98);
-    vec3 shadowColor = vec3(0.85);
-    vec3 color = mix(shadowColor, highlightColor, ambient + diffuse * 0.5 + specular * 0.3);
+    vec3 shadowColor = vec3(0.75); // Darker shadow value
+    vec3 color = mix(shadowColor, highlightColor, ambient * 0.8 + diffuse * 0.6 + specular * 0.3);
     
     gl_FragColor = vec4(color, 1.0);
 }
