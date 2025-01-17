@@ -48,6 +48,18 @@ class ShaderRenderer {
     this.light.position.set(2, 2, 3);
     this.scene.add(this.light);
 
+    // Create reveal map render target
+    this.revealRenderTarget = new THREE.WebGLRenderTarget(
+      1024,
+      1024,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RedFormat,
+        type: THREE.FloatType
+      }
+    );
+
     // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
     
@@ -57,10 +69,9 @@ class ShaderRenderer {
       fragmentShader: fragmentShader,
       uniforms: {
         uMouse: { value: this.mouse },
-        uTrailTexture: { value: null },
+        uRevealMap: { value: this.revealRenderTarget.texture },
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
-        uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
       },
@@ -144,6 +155,21 @@ class ShaderRenderer {
   handleMouseMove(event) {
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
+    
+    // Draw to reveal map
+    const revealScene = new THREE.Scene();
+    const brushGeometry = new THREE.CircleGeometry(0.05, 32);
+    const brushMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const brush = new THREE.Mesh(brushGeometry, brushMaterial);
+    
+    brush.position.set(this.mouse.x * 2 - 1, this.mouse.y * 2 - 1, 0);
+    revealScene.add(brush);
+    
+    this.renderer.setRenderTarget(this.revealRenderTarget);
+    this.renderer.autoClear = false;
+    this.renderer.render(revealScene, this.camera);
+    this.renderer.setRenderTarget(null);
+    this.renderer.autoClear = true;
   }
 
   handleResize() {
