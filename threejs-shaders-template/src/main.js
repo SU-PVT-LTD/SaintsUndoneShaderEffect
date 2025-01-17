@@ -20,8 +20,8 @@ class ShaderRenderer {
       height: window.innerHeight,
     };
 
-    // Create accumulation textures
-    this.accumulationRenderTarget = new THREE.WebGLRenderTarget(
+    // Create ping-pong buffers
+    this.bufferA = new THREE.WebGLRenderTarget(
       this.sizes.width,
       this.sizes.height,
       {
@@ -29,12 +29,11 @@ class ShaderRenderer {
         magFilter: THREE.LinearFilter,
         format: THREE.RGBAFormat,
         type: THREE.FloatType,
-        stencilBuffer: false,
-        depthBuffer: false
       }
     );
     
-    this.currentRenderTarget = this.accumulationRenderTarget.clone();
+    this.bufferB = this.bufferA.clone();
+    this.currentBuffer = this.bufferA;
 
     this.initGeometry();
     this.initTrailEffect();
@@ -144,22 +143,19 @@ class ShaderRenderer {
 
   animate() {
     this.controls.update();
-    const elapsedTime = this.clock.getElapsedTime();
-    this.trailMaterial.uniforms.uTime.value = elapsedTime;
 
-    // Render main scene to current texture
-    this.renderer.setRenderTarget(this.currentRenderTarget);
-    this.renderer.render(this.scene, this.camera);
-
-    // Update uniforms
-    this.trailMaterial.uniforms.uCurrentTexture.value = this.currentRenderTarget.texture;
-    this.trailMaterial.uniforms.uAccumulatedTexture.value = this.accumulationRenderTarget.texture;
-
-    // Render trail effect
-    this.renderer.setRenderTarget(this.accumulationRenderTarget);
+    // Swap buffers
+    const temp = this.currentBuffer;
+    this.currentBuffer = this.currentBuffer === this.bufferA ? this.bufferB : this.bufferA;
+    
+    // Update trail uniforms
+    this.trailMaterial.uniforms.uAccumulatedTexture.value = temp.texture;
+    
+    // Render trail
+    this.renderer.setRenderTarget(this.currentBuffer);
     this.renderer.render(this.trailScene, this.trailCamera);
-
-    // Final output to screen
+    
+    // Final scene render
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.scene, this.camera);
 
