@@ -98,7 +98,7 @@ class ShaderRenderer {
       uniforms: {
         uTrailTexture: { value: null }, // Previous frame texture
         uCurrentTexture: { value: null }, // Current frame texture
-        uDecay: { value: 0.98 }, // Decay factor
+        uDecay: { value: 0.96 }, // Decay factor
       },
     });
 
