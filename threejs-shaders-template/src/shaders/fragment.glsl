@@ -14,14 +14,17 @@ void main()
     
     // Calculate current mouse influence
     float dist = distance(vUv, uMouse);
-    float strength = 1.0 - smoothstep(0.0, 0.2, dist);
+    float currentStrength = 1.0 - smoothstep(0.0, 0.2, dist);
     
-    // Combine with previous reveal mask
-    strength = max(strength, revealMask.r);
+    // Use the maximum between current and previous reveal
+    float finalStrength = max(currentStrength, revealMask.r);
 
-    // Enhanced normal mapping
+    // Apply reveal mask more strongly
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
-    vec3 mixedNormal = normalize(mix(vNormal, normalMap, strength));
+    vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength));
+
+    // Store the reveal strength
+    gl_FragColor.a = finalStrength;
 
     // Enhanced lighting
     vec3 lightDir = normalize(uLightPosition - vPosition);
