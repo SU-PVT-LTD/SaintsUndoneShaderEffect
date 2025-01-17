@@ -7,8 +7,6 @@ uniform sampler2D uNormalMap;
 uniform vec3 uLightPosition;
 uniform sampler2D uTrailTexture;
 
-uniform int uProfile; // 0 for grayscale, 1 for colored, 2 for original white
-
 void main()
 {
     // Get accumulated mask from trail texture
@@ -27,34 +25,11 @@ void main()
     vec3 viewDir = normalize(-vPosition);
     vec3 halfDir = normalize(lightDir + viewDir);
 
-    // Softer diffuse lighting with smoother falloff
-    float diffuse = smoothstep(0.0, 1.0, max(dot(mixedNormal, lightDir), 0.0));
-    
-    // Softer specular with wider spread
-    float specular = pow(max(dot(mixedNormal, halfDir), 0.0), 16.0) * 0.3;
-    
-    // Increased ambient light for softer shadows
-    float ambient = 0.5;
-    
-    vec3 color;
-    if (uProfile == 0) {
-        // Grayscale profile
-        vec3 highlightColor = vec3(0.98);
-        vec3 shadowColor = vec3(0.75);
-        color = mix(shadowColor, highlightColor, ambient * 0.8 + diffuse * 0.6 + specular * 0.3);
-    } else if (uProfile == 1) {
-        // Colored profile
-        vec3 baseColor = mix(
-            vec3(0.1, 0.2, 0.4),  // Dark blue
-            vec3(0.4, 0.2, 0.8),  // Purple
-            diffuse
-        );
-        vec3 glowColor = vec3(0.6, 0.4, 1.0) * specular;
-        color = baseColor * (ambient + diffuse * 0.7) + glowColor;
-    } else {
-        // Original white profile
-        color = vec3(0.85) * (ambient + diffuse * 0.7 + specular);
-    }
-    
+    float diffuse = max(dot(mixedNormal, lightDir), 0.0);
+    float specular = pow(max(dot(mixedNormal, halfDir), 0.0), 32.0);
+
+    float ambient = 0.3;
+    vec3 color = vec3(0.722) * (ambient + diffuse + specular * 0.5);
+
     gl_FragColor = vec4(color, 1.0);
 }
