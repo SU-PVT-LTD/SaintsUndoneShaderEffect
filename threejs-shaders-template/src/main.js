@@ -61,10 +61,11 @@ class ShaderRenderer {
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
         uDecay: { value: 0.98 },
-        uDisplacementStrength: { value: 0.08 },
-        uEffectRadius: { value: 0.25 },
+        uDisplacementStrength: { value: 0.15 },
+        uEffectRadius: { value: 0.3 },
         time: { value: 0 },
       },
+      transparent: true,
       side: THREE.DoubleSide,
     });
 

@@ -6,6 +6,7 @@ uniform vec2 uMouse;
 uniform sampler2D uNormalMap;
 uniform float uDisplacementStrength;
 uniform float uEffectRadius;
+uniform float time;
 
 void main()
 {
@@ -15,23 +16,31 @@ void main()
     float dist = distance(vUv, uMouse);
     float strength = 1.0 - smoothstep(0.0, uEffectRadius, dist);
     
-    // Create ripple effect
-    float ripple = sin(dist * 30.0 - time * 2.0) * 0.5 + 0.5;
-    strength = strength * ripple;
+    // Create water ripple effect with multiple waves
+    float ripple = sin(dist * 20.0 - time * 1.5) * 0.5;
+    ripple += sin(dist * 10.0 - time * 0.8) * 0.25;
+    strength = strength * (ripple + 1.0);
     
-    // Sample normal map and create fluid-like normals
-    vec3 normalColor = texture2D(uNormalMap, vUv + vec2(time * 0.05)).rgb * 2.0 - 1.0;
+    // Animated water surface
+    vec2 waterUV = vUv + vec2(
+        sin(vUv.y * 10.0 + time * 0.5) * 0.02,
+        cos(vUv.x * 10.0 + time * 0.5) * 0.02
+    );
+    
+    // Sample normal map for water surface detail
+    vec3 normalColor = texture2D(uNormalMap, waterUV).rgb * 2.0 - 1.0;
     vec3 surfaceNormal = normalize(normalMatrix * normalColor);
     
-    // Smooth wave displacement
-    float displacement = sin(dot(normalColor, vec3(0.5)) * 3.14159 + time);
-    displacement *= strength;
+    // Water wave displacement
+    float baseWave = sin(vUv.x * 5.0 + time * 0.5) * 0.05 + 
+                    cos(vUv.y * 5.0 + time * 0.3) * 0.05;
+    float displacement = baseWave + strength;
     
-    // Apply displacement with fluid-like behavior
-    vec3 displacementVector = mix(normal, surfaceNormal, 0.7);
+    // Fluid-like displacement
+    vec3 displacementVector = mix(normal, surfaceNormal, 0.8);
     vec3 newPosition = position + displacementVector * displacement * uDisplacementStrength;
     
-    vNormal = normalMatrix * normal;
+    vNormal = normalMatrix * mix(normal, surfaceNormal, 0.5);
     vPosition = (modelViewMatrix * vec4(newPosition, 1.0)).xyz;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
 }
