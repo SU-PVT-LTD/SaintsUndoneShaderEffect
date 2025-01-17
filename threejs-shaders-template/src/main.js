@@ -63,6 +63,7 @@ class ShaderRenderer {
         uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
+        uTime: { value: 0 },
       },
       side: THREE.DoubleSide,
     });
@@ -177,6 +178,11 @@ class ShaderRenderer {
   }
 
   animate() {
+    const elapsedTime = this.clock.getElapsedTime();
+    
+    // Update uniforms
+    this.material.uniforms.uTime.value = elapsedTime;
+    
     // Update controls
     this.controls.update();
 

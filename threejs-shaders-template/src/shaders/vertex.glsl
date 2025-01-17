@@ -6,6 +6,7 @@ uniform vec2 uMouse;
 uniform sampler2D uNormalMap;
 uniform float uDisplacementStrength;
 uniform float uEffectRadius;
+uniform float uTime;
 
 void main()
 {
