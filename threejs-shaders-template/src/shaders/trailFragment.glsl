@@ -9,18 +9,23 @@ void main() {
     vec4 current = texture2D(uCurrentTexture, vUv);
     vec4 previous = texture2D(uTrailTexture, vUv);
     
-    // Enhanced trail effect
+    // Enhanced embossed trail effect
     float trailStrength = max(previous.r, max(previous.g, previous.b));
-    trailStrength = pow(trailStrength * uDecay, 0.5) * 2.0;
+    
+    // Stronger decay for more pronounced trail fade
+    float decay = pow(uDecay, 1.5);
+    trailStrength *= decay;
     
     // Smoother blend between frames
-    vec4 trail = mix(previous, current, 0.2);
-    trail *= 0.98; // Subtle fade out
+    vec4 trail = mix(previous, current, 0.15);
     
-    // Add time-based modulation for more organic feel
-    float modulation = 0.97 + 0.03 * sin(uTime * 0.5);
-    trail *= modulation;
+    // Add subtle wave movement
+    float wave = sin(uTime * 0.5 + vUv.x * 3.0) * 0.02;
+    trail.rgb += vec3(wave);
     
-    // Apply trail strength
+    // Enhance brightness of active areas
+    float brightness = smoothstep(0.2, 0.8, trailStrength);
+    trail.rgb *= (1.0 + brightness * 0.5);
+    
     gl_FragColor = vec4(trail.rgb * trailStrength, 1.0);
 }

@@ -97,11 +97,14 @@ class ShaderRenderer {
       uniforms: {
         uTrailTexture: { value: null },
         uCurrentTexture: { value: null },
-        uDecay: { value: 0.98 },
+        uDecay: { value: 0.95 },
         uTime: { value: 0.0 },
       },
       transparent: true,
-      blending: THREE.AdditiveBlending,
+      blending: THREE.CustomBlending,
+      blendEquation: THREE.AddEquation,
+      blendSrc: THREE.OneFactor,
+      blendDst: THREE.OneMinusSrcAlphaFactor,
     });
 
     // Plane for trail rendering
