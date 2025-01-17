@@ -20,7 +20,7 @@ class ShaderRenderer {
       height: window.innerHeight,
     };
 
-    // Create accumulation texture
+    // Create accumulation textures
     this.accumulationRenderTarget = new THREE.WebGLRenderTarget(
       this.sizes.width,
       this.sizes.height,
@@ -29,8 +29,12 @@ class ShaderRenderer {
         magFilter: THREE.LinearFilter,
         format: THREE.RGBAFormat,
         type: THREE.FloatType,
+        stencilBuffer: false,
+        depthBuffer: false
       }
     );
+    
+    this.currentRenderTarget = this.accumulationRenderTarget.clone();
 
     this.initGeometry();
     this.initTrailEffect();
@@ -143,17 +147,21 @@ class ShaderRenderer {
     const elapsedTime = this.clock.getElapsedTime();
     this.trailMaterial.uniforms.uTime.value = elapsedTime;
 
-    // Render main scene to a texture
-    this.renderer.setRenderTarget(this.accumulationRenderTarget);
+    // Render main scene to current texture
+    this.renderer.setRenderTarget(this.currentRenderTarget);
     this.renderer.render(this.scene, this.camera);
 
-    // Update trail uniforms
-    this.trailMaterial.uniforms.uCurrentTexture.value = this.accumulationRenderTarget.texture;
+    // Update uniforms
+    this.trailMaterial.uniforms.uCurrentTexture.value = this.currentRenderTarget.texture;
     this.trailMaterial.uniforms.uAccumulatedTexture.value = this.accumulationRenderTarget.texture;
 
-    // Final render to screen with trail effect
-    this.renderer.setRenderTarget(null);
+    // Render trail effect
+    this.renderer.setRenderTarget(this.accumulationRenderTarget);
     this.renderer.render(this.trailScene, this.trailCamera);
+
+    // Final output to screen
+    this.renderer.setRenderTarget(null);
+    this.renderer.render(this.scene, this.camera);
 
     requestAnimationFrame(() => this.animate());
   }
