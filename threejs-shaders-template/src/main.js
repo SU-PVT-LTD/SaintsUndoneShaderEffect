@@ -98,6 +98,7 @@ class ShaderRenderer {
         uTrailTexture: { value: null }, // Previous frame texture
         uCurrentTexture: { value: null }, // Current frame texture
         uDecay: { value: 0.95 }, // Decay factor
+        uTime: { value: 0.0 }, // Time for animation
       },
     });
 
@@ -179,6 +180,9 @@ class ShaderRenderer {
   animate() {
     // Update controls
     this.controls.update();
+    
+    // Update time uniform
+    this.trailMaterial.uniforms.uTime.value = this.clock.getElapsedTime();
 
     // Update the trail texture
     this.updateTrailTexture();
