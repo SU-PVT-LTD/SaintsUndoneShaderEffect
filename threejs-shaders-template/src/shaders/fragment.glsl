@@ -34,18 +34,8 @@ void main()
     // Increased ambient light for softer shadows
     float ambient = 0.5;
     
-    // Create a gradient color based on lighting
-    vec3 baseColor = mix(
-        vec3(0.1, 0.2, 0.4),  // Dark blue
-        vec3(0.4, 0.2, 0.8),  // Purple
-        diffuse
-    );
-    
-    // Add subtle glow
-    vec3 glowColor = vec3(0.6, 0.4, 1.0) * specular;
-    
-    // Blend the components
-    vec3 color = baseColor * (ambient + diffuse * 0.7) + glowColor;
+    // Blend the components with adjusted weights
+    vec3 color = vec3(0.85) * (ambient + diffuse * 0.7 + specular);
 
     gl_FragColor = vec4(color, 1.0);
 }
