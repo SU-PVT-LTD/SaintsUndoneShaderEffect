@@ -76,6 +76,11 @@ class ShaderRenderer {
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
+    
+    // Add profile selector
+    this.material.uniforms.uProfile = { value: 0 };
+    const profiles = { 'Grayscale': 0, 'Colored': 1 };
+    effectFolder.add(this.material.uniforms.uProfile, 'value', profiles).name('Color Profile');
   }
 
   initTrailRenderTarget() {
