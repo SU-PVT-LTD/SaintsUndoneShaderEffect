@@ -40,12 +40,12 @@ class ShaderRenderer {
   }
 
   initGeometry() {
-    // Geometry
-    this.geometry = new THREE.PlaneGeometry(1, 1, 32, 32);
+    // Geometry with more subdivisions for smoother displacement
+    this.geometry = new THREE.PlaneGeometry(1, 1, 256, 256);
 
     // Light
     this.light = new THREE.PointLight(0xffffff, 1);
-    this.light.position.set(1, 1, 2);
+    this.light.position.set(2, 2, 3);
     this.scene.add(this.light);
 
     // Normal Map Texture
