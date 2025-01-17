@@ -52,6 +52,26 @@ class ShaderRenderer {
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
     
     // Material
+    // Define lighting profiles
+    this.profiles = {
+      original: {
+        ambient: 0.3,
+        diffuseStrength: 1.0,
+        specularStrength: 0.5,
+        specularPower: 32.0,
+        wrap: 0.0
+      },
+      soft: {
+        ambient: 0.5,
+        diffuseStrength: 0.7,
+        specularStrength: 0.3,
+        specularPower: 16.0,
+        wrap: 0.5
+      }
+    };
+
+    this.currentProfile = 'soft';
+
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
@@ -63,6 +83,11 @@ class ShaderRenderer {
         uDecay: { value: 0.95 },
         uDisplacementStrength: { value: 0.05 },
         uEffectRadius: { value: 0.15 },
+        uAmbient: { value: this.profiles.soft.ambient },
+        uDiffuseStrength: { value: this.profiles.soft.diffuseStrength },
+        uSpecularStrength: { value: this.profiles.soft.specularStrength },
+        uSpecularPower: { value: this.profiles.soft.specularPower },
+        uWrap: { value: this.profiles.soft.wrap }
       },
       side: THREE.DoubleSide,
     });
@@ -73,6 +98,18 @@ class ShaderRenderer {
 
     // Debug controls
     const effectFolder = this.gui.addFolder('Effect Controls');
+    
+    // Add profile switcher
+    effectFolder.add({ profile: this.currentProfile }, 'profile', ['original', 'soft'])
+      .onChange((value) => {
+        this.currentProfile = value;
+        const profile = this.profiles[value];
+        this.material.uniforms.uAmbient.value = profile.ambient;
+        this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
+        this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
+        this.material.uniforms.uSpecularPower.value = profile.specularPower;
+        this.material.uniforms.uWrap.value = profile.wrap;
+      });
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
