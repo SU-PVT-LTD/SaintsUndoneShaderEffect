@@ -107,7 +107,7 @@ class ShaderRenderer {
         uPreviousTexture: { value: null },
         uCurrentTexture: { value: null },
         uMousePos: { value: this.mouse },
-        uAccumulationStrength: { value: 0.95 },
+        uAccumulationStrength: { value: 0.98 },
       },
     });
 
