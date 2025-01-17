@@ -14,18 +14,22 @@ void main()
     // Calculate distance from mouse with smoother transition
     float dist = distance(vUv, uMouse);
     float strength = 1.0 - smoothstep(0.0, uEffectRadius, dist);
-    strength = pow(strength, 2.0); // Sharper falloff
     
-    // Sample normal map and convert to world space normal
-    vec3 normalColor = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
+    // Create ripple effect
+    float ripple = sin(dist * 30.0 - time * 2.0) * 0.5 + 0.5;
+    strength = strength * ripple;
+    
+    // Sample normal map and create fluid-like normals
+    vec3 normalColor = texture2D(uNormalMap, vUv + vec2(time * 0.05)).rgb * 2.0 - 1.0;
     vec3 surfaceNormal = normalize(normalMatrix * normalColor);
     
-    // Calculate displacement using normal map direction
-    float displacement = dot(normalColor, vec3(0.0, 0.0, 1.0));
+    // Smooth wave displacement
+    float displacement = sin(dot(normalColor, vec3(0.5)) * 3.14159 + time);
+    displacement *= strength;
     
-    // Apply displacement using both surface normal and base normal
-    vec3 displacementVector = mix(normal, surfaceNormal, 0.5);
-    vec3 newPosition = position + displacementVector * displacement * strength * uDisplacementStrength;
+    // Apply displacement with fluid-like behavior
+    vec3 displacementVector = mix(normal, surfaceNormal, 0.7);
+    vec3 newPosition = position + displacementVector * displacement * uDisplacementStrength;
     
     vNormal = normalMatrix * normal;
     vPosition = (modelViewMatrix * vec4(newPosition, 1.0)).xyz;

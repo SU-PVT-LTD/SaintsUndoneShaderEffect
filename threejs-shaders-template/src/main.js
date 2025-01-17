@@ -60,9 +60,10 @@ class ShaderRenderer {
         uTrailTexture: { value: null },
         uNormalMap: { value: normalMap },
         uLightPosition: { value: this.light.position },
-        uDecay: { value: 0.95 },
-        uDisplacementStrength: { value: 0.05 },
-        uEffectRadius: { value: 0.15 },
+        uDecay: { value: 0.98 },
+        uDisplacementStrength: { value: 0.08 },
+        uEffectRadius: { value: 0.25 },
+        time: { value: 0 },
       },
       side: THREE.DoubleSide,
     });
@@ -179,6 +180,9 @@ class ShaderRenderer {
   animate() {
     // Update controls
     this.controls.update();
+
+    // Update time uniform
+    this.material.uniforms.time.value = this.clock.getElapsedTime();
 
     // Update the trail texture
     this.updateTrailTexture();
