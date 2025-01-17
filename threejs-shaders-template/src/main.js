@@ -165,29 +165,29 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Create a temporary render target for the current frame
-    const currentRenderTarget = this.trailRenderTarget.clone();
+    // Swap render targets for ping-pong effect
+    const temp = this.trailRenderTarget.clone();
     
-    // Render current frame
-    this.renderer.setRenderTarget(currentRenderTarget);
+    // Render the current scene to temp target
+    this.renderer.setRenderTarget(temp);
     this.renderer.render(this.scene, this.camera);
     
-    // Store previous frame
-    const previousTexture = this.trailRenderTarget.texture.clone();
+    // Update trail uniforms
+    this.trailMaterial.uniforms.uCurrentTexture.value = temp.texture;
+    this.trailMaterial.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
     
-    // Render current frame to trail render target
+    // Render trail effect
     this.renderer.setRenderTarget(this.trailRenderTarget);
-    this.mesh.material = this.material;
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.trailScene, this.trailCamera);
     
-    // Update material uniforms with previous frame
-    this.material.uniforms.uTrailTexture.value = previousTexture;
+    // Update main material with trail
+    this.material.uniforms.uTrailTexture.value = this.trailRenderTarget.texture;
     
     // Reset render target
     this.renderer.setRenderTarget(null);
     
-    // Dispose of temporary render target
-    currentRenderTarget.dispose();
+    // Clean up
+    temp.dispose();
   }
 
   animate() {

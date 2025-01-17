@@ -12,7 +12,11 @@ void main()
     vec4 trailColor = texture2D(uTrailTexture, vUv);
     float dist = distance(vUv, uMouse);
     float strength = 1.0 - smoothstep(0.0, 0.2, dist);
-    strength = max(strength, trailColor.r * uDecay);
+    strength = max(strength, trailColor.g * uDecay);
+    
+    // Add trail glow
+    float trailStrength = trailColor.r + trailColor.g + trailColor.b;
+    strength = max(strength, trailStrength * 0.5);
 
     // Enhanced normal mapping
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;

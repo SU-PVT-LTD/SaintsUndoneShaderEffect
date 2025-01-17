@@ -9,11 +9,12 @@ void main() {
     vec4 current = texture2D(uCurrentTexture, vUv);
     
     // More pronounced trail effect
-    float decay = pow(uDecay, 1.5);
-    vec4 blended = mix(previous * decay, current, 0.15);
+    float decay = pow(uDecay, 1.2);
+    vec4 blended = mix(previous * decay, current, 0.2);
     
-    // Ensure minimum opacity
-    blended.a = max(blended.a, 0.1);
+    // Enhance trail brightness
+    blended *= 1.2;
+    blended.a = 1.0;
     
     gl_FragColor = blended;
 }
