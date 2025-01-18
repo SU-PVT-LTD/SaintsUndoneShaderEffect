@@ -273,7 +273,7 @@ class ShaderRenderer {
     
     // Update cursor velocity uniform and apply decay
     this.material.uniforms.uCursorVelocity.value = this.cursorVelocity;
-    this.cursorVelocity *= 0.75; // Much faster decay for less persistence
+    this.cursorVelocity *= 0.85; // Faster decay for sharper effect
 
     // Update the trail texture
     this.updateTrailTexture();
