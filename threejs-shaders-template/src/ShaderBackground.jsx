@@ -1,5 +1,7 @@
+
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { GUI } from 'lil-gui';
 import vertexShader from './shaders/vertex.glsl';
 import fragmentShader from './shaders/fragment.glsl';
 import trailFragmentShader from './shaders/trailFragment.glsl';
@@ -7,22 +9,33 @@ import trailVertexShader from './shaders/trailVertex.glsl';
 
 const ShaderBackground = ({ className = '' }) => {
   const canvasRef = useRef(null);
+  const mouseRef = useRef(new THREE.Vector2());
   const rendererRef = useRef(null);
+  const isPointerActiveRef = useRef(false);
+  const frameRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+    if (!canvas) return;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
     rendererRef.current = renderer;
 
     const scene = new THREE.Scene();
-    const mouse = new THREE.Vector2();
+    const mouse = mouseRef.current;
 
+    // Setup
     const sizes = {
       width: window.innerWidth,
-      height: window.innerHeight,
+      height: window.innerHeight
     };
 
-    // Initialize geometry
+    // Geometry setup
     const geometry = new THREE.PlaneGeometry(2, 2, 256, 256);
     const light = new THREE.PointLight(0xffffff, 1);
     light.position.set(0, 0, 2);
@@ -30,6 +43,7 @@ const ShaderBackground = ({ className = '' }) => {
 
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
 
+    // Material setup
     const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
@@ -53,58 +67,29 @@ const ShaderBackground = ({ className = '' }) => {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-      // Create GUI controls
-      const gui = new GUI();
-      
-      // Effect controls folder
-      const effectFolder = gui.addFolder('Effect Controls');
-      effectFolder.add(material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
-      effectFolder.add(material.uniforms.uEffectRadius, 'value', 0.05, 0.5, 0.01).name('Radius');
-      effectFolder.add(material.uniforms.uAmbient, 'value', 0, 1, 0.01).name('Ambient Light');
-      effectFolder.add(material.uniforms.uDiffuseStrength, 'value', 0, 2, 0.01).name('Diffuse Strength');
-      effectFolder.add(material.uniforms.uSpecularStrength, 'value', 0, 2, 0.01).name('Specular Strength');
-      effectFolder.add(material.uniforms.uSpecularPower, 'value', 1, 64, 1).name('Specular Power');
-      effectFolder.add(material.uniforms.uWrap, 'value', 0, 1, 0.01).name('Light Wrap');
-
-      // Fluid controls folder
-      const fluidFolder = gui.addFolder('Fluid Controls');
-      fluidFolder.add(trailMaterial.uniforms.uAccumulationStrength, 'value', 0.9, 0.999, 0.001).name('Trail Length');
-      fluidFolder.add(trailMaterial.uniforms.uTurbulenceScale, 'value', 1, 20, 0.1).name('Turbulence Scale');
-      fluidFolder.add(trailMaterial.uniforms.uTurbulenceStrength, 'value', 0, 0.5, 0.01).name('Turbulence Strength');
-      fluidFolder.add(trailMaterial.uniforms.uEdgeSharpness, 'value', 0.01, 0.3, 0.01).name('Edge Sharpness');
-      fluidFolder.add(trailMaterial.uniforms.uSwirlStrength, 'value', 0, 0.1, 0.001).name('Swirl Strength');
-
-    // Initialize camera
+    // Camera setup
     const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100);
     camera.position.z = 2;
     scene.add(camera);
 
-    // Initialize trail render targets
+    // Trail setup
     const rtParams = {
       minFilter: THREE.LinearFilter,
       magFilter: THREE.LinearFilter,
       format: THREE.RGBAFormat,
       type: THREE.FloatType,
+      stencilBuffer: false,
+      depthBuffer: false
     };
 
-    const accumulationTargetA = new THREE.WebGLRenderTarget(
-      sizes.width,
-      sizes.height,
-      rtParams
-    );
-
-    const accumulationTargetB = new THREE.WebGLRenderTarget(
-      sizes.width,
-      sizes.height,
-      rtParams
-    );
+    const accumulationTargetA = new THREE.WebGLRenderTarget(sizes.width, sizes.height, rtParams);
+    const accumulationTargetB = new THREE.WebGLRenderTarget(sizes.width, sizes.height, rtParams);
 
     const trailMaterial = new THREE.ShaderMaterial({
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
         uPreviousTexture: { value: null },
-        uCurrentTexture: { value: null },
         uMousePos: { value: mouse },
         uAccumulationStrength: { value: 0.98 },
         uTurbulenceScale: { value: 8.0 },
@@ -115,89 +100,34 @@ const ShaderBackground = ({ className = '' }) => {
       },
     });
 
-    const trailPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(2, 2),
-      trailMaterial
-    );
     const trailScene = new THREE.Scene();
+    const trailPlane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), trailMaterial);
     trailScene.add(trailPlane);
 
     const trailCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     trailCamera.position.z = 1;
 
-    // Clear initial render targets
+    // Clear initial targets
     renderer.setRenderTarget(accumulationTargetA);
     renderer.clear();
     renderer.setRenderTarget(accumulationTargetB);
     renderer.clear();
     renderer.setRenderTarget(null);
 
-    const handleResize = () => {
-      sizes.width = window.innerWidth;
-      sizes.height = window.innerHeight;
+    const updatePointerPosition = (clientX, clientY) => {
+      if (!isPointerActiveRef.current) return;
 
-      camera.aspect = sizes.width / sizes.height;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize(sizes.width, sizes.height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-      accumulationTargetA.setSize(sizes.width, sizes.height);
-      accumulationTargetB.setSize(sizes.width, sizes.height);
-    };
-
-    let isPointerDown = false;
-    
-    const updatePointerPosition = (x, y) => {
       const rect = canvas.getBoundingClientRect();
-      const normalizedX = (x - rect.left) / rect.width;
-      const normalizedY = 1.0 - (y - rect.top) / rect.height;
-      
-      // Ensure values are within bounds
-      mouse.x = Math.max(0, Math.min(1, normalizedX));
-      mouse.y = Math.max(0, Math.min(1, normalizedY));
-      
-      // Force immediate render for smoother trails
-      updateTrailTexture();
-      renderer.render(scene, camera);
+      const x = (clientX - rect.left) / rect.width;
+      const y = 1.0 - (clientY - rect.top) / rect.height;
+
+      mouse.x = Math.max(0, Math.min(1, x));
+      mouse.y = Math.max(0, Math.min(1, y));
     };
-
-    const handlePointerDown = (event) => {
-      event.preventDefault();
-      isPointerDown = true;
-      canvas.setPointerCapture(event.pointerId);
-      updatePointerPosition(event.clientX, event.clientY);
-    };
-
-    const handlePointerMove = (event) => {
-      event.preventDefault();
-      if (event.pointerType === 'touch' && !isPointerDown) return;
-      updatePointerPosition(event.clientX, event.clientY);
-    };
-
-    const handlePointerUp = (event) => {
-      event.preventDefault();
-      isPointerDown = false;
-      canvas.releasePointerCapture(event.pointerId);
-    };
-
-    // Initial size setup
-    handleResize();
-
-    // Use Pointer events for unified mouse/touch handling
-    canvas.style.touchAction = 'none';
-    canvas.addEventListener('pointerdown', handlePointerDown, { passive: false });
-    canvas.addEventListener('pointermove', handlePointerMove, { passive: false });
-    canvas.addEventListener('pointerup', handlePointerUp, { passive: false });
-    canvas.addEventListener('pointercancel', handlePointerUp, { passive: false });
-    window.addEventListener('resize', handleResize);
-
-    // Start animation
-    animate();
 
     const updateTrailTexture = () => {
       trailMaterial.uniforms.uTime.value += 0.01;
-
+      
       const currentTarget = accumulationTargetA;
       const previousTarget = accumulationTargetB;
 
@@ -216,25 +146,77 @@ const ShaderBackground = ({ className = '' }) => {
     const animate = () => {
       updateTrailTexture();
       renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+      frameRef.current = requestAnimationFrame(animate);
     };
 
+    const handleResize = () => {
+      sizes.width = window.innerWidth;
+      sizes.height = window.innerHeight;
+
+      camera.aspect = sizes.width / sizes.height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      accumulationTargetA.setSize(sizes.width, sizes.height);
+      accumulationTargetB.setSize(sizes.width, sizes.height);
+    };
+
+    // Modern pointer event handlers
+    const pointerMove = (e) => {
+      if (isPointerActiveRef.current) {
+        updatePointerPosition(e.clientX, e.clientY);
+      }
+    };
+
+    const pointerDown = (e) => {
+      isPointerActiveRef.current = true;
+      canvas.setPointerCapture(e.pointerId);
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const pointerUp = () => {
+      isPointerActiveRef.current = false;
+    };
+
+    // Event listeners
+    canvas.addEventListener('pointermove', pointerMove, { passive: true });
+    canvas.addEventListener('pointerdown', pointerDown);
+    canvas.addEventListener('pointerup', pointerUp);
+    canvas.addEventListener('pointercancel', pointerUp);
+    window.addEventListener('resize', handleResize);
+
+    // Initial setup
+    handleResize();
+    animate();
 
     return () => {
+      frameRef.current && cancelAnimationFrame(frameRef.current);
+      canvas.removeEventListener('pointermove', pointerMove);
+      canvas.removeEventListener('pointerdown', pointerDown);
+      canvas.removeEventListener('pointerup', pointerUp);
+      canvas.removeEventListener('pointercancel', pointerUp);
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('touchstart', handleTouchMove);
-      window.removeEventListener('touchmove', handleTouchMove);
+      
       renderer.dispose();
       material.dispose();
       geometry.dispose();
+      accumulationTargetA.dispose();
+      accumulationTargetB.dispose();
     };
   }, []);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      className={`fixed top-0 left-0 w-full h-full outline-none touch-auto -z-10 ${className}`}
+    <canvas
+      ref={canvasRef}
+      className={`fixed top-0 left-0 w-full h-full outline-none -z-10 ${className}`}
+      style={{
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none'
+      }}
     />
   );
 };
