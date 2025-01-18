@@ -162,23 +162,30 @@ const ShaderBackground = ({ className = '' }) => {
       event.preventDefault();
       event.stopPropagation();
       const touch = event.touches[0];
-      updateMousePosition(touch.clientX, touch.clientY);
+      if (touch) {
+        updateMousePosition(touch.clientX, touch.clientY);
+      }
     };
 
     const handleTouchStart = (event) => {
       event.preventDefault();
       event.stopPropagation();
       const touch = event.touches[0];
-      updateMousePosition(touch.clientX, touch.clientY);
+      if (touch) {
+        updateMousePosition(touch.clientX, touch.clientY);
+      }
     };
 
     // Initial size setup
     handleResize();
 
-    // Add event listeners directly to canvas instead of window
-    canvas.addEventListener('mousemove', handleMouseMove, { passive: false });
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    // Add event listeners directly to canvas
+    canvas.style.touchAction = 'none'; // Prevent default touch actions
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchstart', handleTouchStart);
+    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('touchend', (e) => e.preventDefault());
+    canvas.addEventListener('touchcancel', (e) => e.preventDefault());
     window.addEventListener('resize', handleResize);
 
     // Start animation
