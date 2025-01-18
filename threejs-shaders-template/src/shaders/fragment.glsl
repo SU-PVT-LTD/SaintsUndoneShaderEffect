@@ -42,7 +42,7 @@ void main()
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
     // Apply refined chromatic aberration
-    vec3 color = baseColor * 0.95; // Slightly dimmer base
+    vec3 color = baseColor * 0.85; // Dimmer base
     if (finalStrength > 0.005) {
         vec2 offsetR = vec2(aberrationStrength * 0.7, aberrationStrength * 0.2);
         vec2 offsetB = vec2(-aberrationStrength * 0.7, -aberrationStrength * 0.2);
@@ -50,9 +50,9 @@ void main()
         float trailR = texture2D(uTrailTexture, vUv + offsetR).r;
         float trailB = texture2D(uTrailTexture, vUv + offsetB).r;
         
-        color.r = mix(baseColor.r, trailR * 1.2, finalStrength * aberrationStrength * 80.0);
-        color.b = mix(baseColor.b, trailB * 1.2, finalStrength * aberrationStrength * 80.0);
-        color.g = mix(baseColor.g, (trailR + trailB) * 0.6, finalStrength * aberrationStrength * 50.0);
+        color.r = mix(baseColor.r, trailR * 0.9, finalStrength * aberrationStrength * 80.0);
+        color.b = mix(baseColor.b, trailB * 0.9, finalStrength * aberrationStrength * 80.0);
+        color.g = mix(baseColor.g, (trailR + trailB) * 0.45, finalStrength * aberrationStrength * 50.0);
     }
     
     // Ensure we don't exceed maximum brightness
