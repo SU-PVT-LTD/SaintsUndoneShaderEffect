@@ -42,10 +42,11 @@ void main() {
     vec2 noiseCoord = vUv * 8.0 + time * 0.1;
     float turbulence = noise(noiseCoord) * 0.15;
     
-    // Create organic, fluid-like falloff
-    float baseStrength = 1.0 - smoothstep(0.0, 0.15, dist + turbulence);
-    float edgeNoise = noise(vUv * 20.0 + time * 0.05) * 0.2;
-    float strength = baseStrength + edgeNoise * baseStrength;
+    // Create organic, fluid-like falloff with sharper center
+    float baseStrength = 1.0 - smoothstep(0.0, 0.2, dist + turbulence);
+    float centerBoost = 1.0 - smoothstep(0.0, 0.05, dist);
+    float edgeNoise = noise(vUv * 20.0 + time * 0.05) * 0.15;
+    float strength = mix(baseStrength, centerBoost, 0.5) + edgeNoise * baseStrength;
     
     // Add some swirling motion
     vec2 swirl = vec2(
