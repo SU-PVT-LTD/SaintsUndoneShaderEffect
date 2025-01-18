@@ -14,6 +14,9 @@ class ShaderRenderer {
 
     // Mouse
     this.mouse = new THREE.Vector2();
+    this.prevMouse = new THREE.Vector2();
+    this.mouseVelocity = new THREE.Vector2();
+    this.lastTime = 0;
 
     // Canvas
     this.canvas = document.querySelector("canvas.webgl");
@@ -87,7 +90,9 @@ class ShaderRenderer {
         uDiffuseStrength: { value: this.profiles.soft.diffuseStrength },
         uSpecularStrength: { value: this.profiles.soft.specularStrength },
         uSpecularPower: { value: this.profiles.soft.specularPower },
-        uWrap: { value: this.profiles.soft.wrap }
+        uWrap: { value: this.profiles.soft.wrap },
+        uMouseVelocity: { value: this.mouseVelocity },
+        uChromaticStrength: { value: 0.5 }
       },
       side: THREE.DoubleSide,
     });
@@ -211,8 +216,18 @@ class ShaderRenderer {
   }
 
   handleMouseMove(event) {
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - this.lastTime) / 1000;
+    this.lastTime = currentTime;
+
+    this.prevMouse.copy(this.mouse);
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
+    
+    this.mouseVelocity.subVectors(this.mouse, this.prevMouse);
+    if (deltaTime > 0) {
+      this.mouseVelocity.divideScalar(deltaTime);
+    }
   }
 
   handleResize() {
