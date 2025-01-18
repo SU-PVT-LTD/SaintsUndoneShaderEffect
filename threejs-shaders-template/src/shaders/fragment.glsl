@@ -17,11 +17,11 @@ uniform float uChromaticStrength;
 void main()
 {
     float velocity = length(uMouseVelocity);
-    float chromatic = uChromaticStrength * 0.05; // Remove velocity dependence and increase base effect
+    float chromatic = min(velocity * uChromaticStrength, 0.01);
     
-    // Sample with chromatic aberration - increased offset
-    vec2 redOffset = vUv + chromatic * vec2(2.0, -1.0);
-    vec2 blueOffset = vUv - chromatic * vec2(-1.0, 2.0);
+    // Sample with chromatic aberration
+    vec2 redOffset = vUv + chromatic * vec2(1.0, 0.0);
+    vec2 blueOffset = vUv - chromatic * vec2(1.0, 0.0);
     
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
@@ -45,12 +45,12 @@ void main()
     // Blend the lighting components based on profile settings
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
-    // Apply stronger chromatic aberration with normal map influence
-    float edgeIntensity = length(normalMap.xy) * 2.0;
+    // Apply subtle chromatic aberration based on normal map edges
+    float edgeIntensity = length(normalMap.xy);
     vec3 color = vec3(
-        mix(baseColor.r, texture2D(uTrailTexture, redOffset).r, chromatic * edgeIntensity),
+        texture2D(uTrailTexture, redOffset).r * edgeIntensity * chromatic + baseColor.r,
         baseColor.g,
-        mix(baseColor.b, texture2D(uTrailTexture, blueOffset).b, chromatic * edgeIntensity)
+        texture2D(uTrailTexture, blueOffset).b * edgeIntensity * chromatic + baseColor.b
     );
     
     // Ensure we don't exceed maximum brightness
