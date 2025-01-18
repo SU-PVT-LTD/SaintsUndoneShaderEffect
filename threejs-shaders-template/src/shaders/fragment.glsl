@@ -16,7 +16,7 @@ uniform float uCursorVelocity;
 void main()
 {
     // Calculate chromatic aberration offset based on cursor velocity
-    float aberrationStrength = min(uCursorVelocity * 0.05, 0.03);
+    float aberrationStrength = min(uCursorVelocity * 0.15, 0.08);
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
@@ -50,8 +50,9 @@ void main()
         float trailR = texture2D(uTrailTexture, vUv + offsetR).r;
         float trailB = texture2D(uTrailTexture, vUv + offsetB).r;
         
-        color.r = mix(baseColor.r, trailR, finalStrength * aberrationStrength * 30.0);
-        color.b = mix(baseColor.b, trailB, finalStrength * aberrationStrength * 30.0);
+        color.r = mix(baseColor.r, trailR, finalStrength * aberrationStrength * 60.0);
+        color.b = mix(baseColor.b, trailB, finalStrength * aberrationStrength * 60.0);
+        color.g = mix(baseColor.g, (trailR + trailB) * 0.5, finalStrength * aberrationStrength * 40.0);
     }
     
     // Ensure we don't exceed maximum brightness
