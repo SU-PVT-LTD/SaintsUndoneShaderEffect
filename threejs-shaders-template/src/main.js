@@ -252,8 +252,8 @@ class ShaderRenderer {
     this.material.uniforms.uTrailTexture.value = currentTarget.texture;
 
     // Swap buffers
-    [this.accumulationTargetA, this.accumulationTargetB] = 
-    [this.accumulationTargetB, this.accumulationTargetA];
+    [this.accumulationTargetA, this.accumulationTargetB] =
+      [this.accumulationTargetB, this.accumulationTargetA];
   }
 
   animate() {
