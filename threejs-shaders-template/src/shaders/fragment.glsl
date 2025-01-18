@@ -47,12 +47,17 @@ void main()
     // Apply chromatic aberration only to the trails
     float edgeIntensity = length(normalMap.xy);
     vec3 color = baseColor;
-    
+
     if (finalStrength > 0.0) {
+        // Make center more crisp by reducing chromatic effect based on strength
+        float centerMask = 1.0 - smoothstep(0.0, 0.5, finalStrength);
+        vec2 adjustedRedOffset = mix(vUv, redOffset, centerMask);
+        vec2 adjustedBlueOffset = mix(vUv, blueOffset, centerMask);
+
         vec3 trailColor = vec3(
-            texture2D(uTrailTexture, redOffset).r,
-            texture2D(uTrailTexture, vUv).g,
-            texture2D(uTrailTexture, blueOffset).b
+            texture2D(uTrailTexture, adjustedRedOffset).r * 1.2,
+            texture2D(uTrailTexture, vUv).g * 1.2,
+            texture2D(uTrailTexture, adjustedBlueOffset).b * 0.6
         );
         color = mix(color, trailColor, finalStrength * edgeIntensity);
     }
