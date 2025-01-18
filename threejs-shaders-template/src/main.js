@@ -92,7 +92,7 @@ class ShaderRenderer {
         uSpecularPower: { value: this.profiles.soft.specularPower },
         uWrap: { value: this.profiles.soft.wrap },
         uMouseVelocity: { value: this.mouseVelocity },
-        uChromaticStrength: { value: 0.05 },
+        uChromaticStrength: { value: 0.03 },
         uVelocityScale: { value: 0.5 },
         uVelocityMax: { value: 2.0 }
       },
