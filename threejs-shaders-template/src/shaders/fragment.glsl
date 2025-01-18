@@ -37,8 +37,16 @@ void main()
     // Blend the lighting components based on profile settings
     vec3 color = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
-    // Ensure we don't exceed maximum brightness
-    color = min(color, vec3(1.0));
+    // Chromatic aberration based on trail strength
+    float aberrationStrength = finalStrength * 0.02; // Adjust this value to control the effect
+    vec3 colorShift = vec3(
+        color.r + texture2D(uTrailTexture, vUv + vec2(aberrationStrength, 0.0)).r * 0.5,
+        color.g,
+        color.b + texture2D(uTrailTexture, vUv - vec2(aberrationStrength, 0.0)).b * 0.5
+    );
     
-    gl_FragColor = vec4(color, 1.0);
+    // Ensure we don't exceed maximum brightness
+    colorShift = min(colorShift, vec3(1.0));
+    
+    gl_FragColor = vec4(colorShift, 1.0);
 }
