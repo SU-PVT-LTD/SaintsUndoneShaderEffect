@@ -160,6 +160,14 @@ const ShaderBackground = ({ className = '' }) => {
 
     const handleTouchMove = (event) => {
       event.preventDefault();
+      event.stopPropagation();
+      const touch = event.touches[0];
+      updateMousePosition(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchStart = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       const touch = event.touches[0];
       updateMousePosition(touch.clientX, touch.clientY);
     };
@@ -168,9 +176,9 @@ const ShaderBackground = ({ className = '' }) => {
     handleResize();
 
     // Add event listeners directly to canvas instead of window
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('touchstart', handleTouchMove);
-    canvas.addEventListener('touchmove', handleTouchMove);
+    canvas.addEventListener('mousemove', handleMouseMove, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('resize', handleResize);
 
     // Start animation
@@ -215,7 +223,7 @@ const ShaderBackground = ({ className = '' }) => {
   return (
     <canvas 
       ref={canvasRef} 
-      className={`fixed top-0 left-0 w-full h-full outline-none pointer-events-none -z-10 ${className}`}
+      className={`fixed top-0 left-0 w-full h-full outline-none touch-auto -z-10 ${className}`}
     />
   );
 };
