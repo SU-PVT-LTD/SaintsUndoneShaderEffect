@@ -11,10 +11,11 @@ void main()
 {
     vUv = uv;
     
-    // Calculate distance from mouse with smoother transition
+    // Calculate distance from mouse with refined transition
     float dist = distance(vUv, uMouse);
     float strength = 1.0 - smoothstep(0.0, uEffectRadius, dist);
-    strength = pow(strength, 2.0); // Sharper falloff
+    strength = pow(strength, 1.5); // Balanced falloff
+    strength *= smoothstep(0.0, 0.1, uEffectRadius - dist); // Softer edges
     
     // Sample normal map and convert to world space normal
     vec3 normalColor = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
