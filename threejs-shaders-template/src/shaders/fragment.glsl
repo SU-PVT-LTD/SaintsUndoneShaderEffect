@@ -15,17 +15,17 @@ uniform float uCursorVelocity;
 
 void main()
 {
-    // Calculate chromatic aberration offset based on cursor velocity
-    float aberrationStrength = min(uCursorVelocity * 0.15, 0.08);
-    // Get accumulated mask from trail texture
+    // Calculate stronger chromatic aberration offset based on cursor velocity
+    float aberrationStrength = min(uCursorVelocity * 0.3, 0.15);
+    // Get accumulated mask from trail texture with sharper falloff
     vec4 accumulation = texture2D(uTrailTexture, vUv);
-    float finalStrength = accumulation.r;
+    float finalStrength = pow(accumulation.r, 1.5); // Sharper falloff
 
-    // Apply reveal mask more strongly
-    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
-    vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength));
+    // Enhanced relief effect
+    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 3.0 - 1.5; // Stronger normal mapping
+    vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength * 1.5));
 
-    // Store the reveal strength
+    // Store the enhanced reveal strength
     gl_FragColor.a = finalStrength;
 
     // Enhanced lighting
@@ -41,18 +41,18 @@ void main()
     // Calculate base color
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
-    // Apply chromatic aberration only along the trail
-    vec3 color = baseColor;
-    if (finalStrength > 0.01) {
-        vec2 offsetR = vec2(aberrationStrength * 0.5, 0.0);
-        vec2 offsetB = vec2(-aberrationStrength * 0.5, 0.0);
+    // Enhanced chromatic aberration with sharper color separation
+    vec3 color = vec3(0.95); // Brighter base color for more contrast
+    if (finalStrength > 0.005) { // Lower threshold for wider effect
+        vec2 offsetR = vec2(aberrationStrength * 0.7, aberrationStrength * 0.2);
+        vec2 offsetB = vec2(-aberrationStrength * 0.7, -aberrationStrength * 0.2);
         
         float trailR = texture2D(uTrailTexture, vUv + offsetR).r;
         float trailB = texture2D(uTrailTexture, vUv + offsetB).r;
         
-        color.r = mix(baseColor.r, trailR, finalStrength * aberrationStrength * 60.0);
-        color.b = mix(baseColor.b, trailB, finalStrength * aberrationStrength * 60.0);
-        color.g = mix(baseColor.g, (trailR + trailB) * 0.5, finalStrength * aberrationStrength * 40.0);
+        color.r = mix(color.r, trailR * 1.2, finalStrength * aberrationStrength * 100.0);
+        color.b = mix(color.b, trailB * 1.2, finalStrength * aberrationStrength * 100.0);
+        color.g = mix(color.g, (trailR + trailB) * 0.4, finalStrength * aberrationStrength * 70.0);
     }
     
     // Ensure we don't exceed maximum brightness
