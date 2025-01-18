@@ -16,7 +16,7 @@ uniform float uCursorVelocity;
 void main()
 {
     // Calculate chromatic aberration offset based on cursor velocity
-    float aberrationStrength = min(uCursorVelocity * 0.01, 0.01);
+    float aberrationStrength = min(uCursorVelocity * 0.05, 0.03);
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
