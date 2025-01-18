@@ -14,9 +14,6 @@ class ShaderRenderer {
 
     // Mouse
     this.mouse = new THREE.Vector2();
-    this.prevMouse = new THREE.Vector2();
-    this.mouseVelocity = new THREE.Vector2();
-    this.lastMouseMoveTime = 0;
 
     // Canvas
     this.canvas = document.querySelector("canvas.webgl");
@@ -152,8 +149,7 @@ class ShaderRenderer {
         uTurbulenceStrength: { value: 0.15 },
         uEdgeSharpness: { value: 0.15 },
         uSwirlStrength: { value: 0.02 },
-        uTime: { value: 0.0 },
-        uVelocity: { value: new THREE.Vector2() }
+        uTime: { value: 0.0 }
       },
     });
 
@@ -215,18 +211,8 @@ class ShaderRenderer {
   }
 
   handleMouseMove(event) {
-    const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastMouseMoveTime) / 1000;
-    this.lastMouseMoveTime = currentTime;
-
-    this.prevMouse.copy(this.mouse);
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
-    
-    if (deltaTime > 0) {
-      this.mouseVelocity.x = (this.mouse.x - this.prevMouse.x) / deltaTime;
-      this.mouseVelocity.y = (this.mouse.y - this.prevMouse.y) / deltaTime;
-    }
   }
 
   handleResize() {
@@ -258,7 +244,6 @@ class ShaderRenderer {
     // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
     this.trailMaterial.uniforms.uMousePos.value = this.mouse;
-    this.trailMaterial.uniforms.uVelocity.value.copy(this.mouseVelocity);
 
     // Render accumulation
     this.renderer.setRenderTarget(currentTarget);
