@@ -41,11 +41,11 @@ class ShaderRenderer {
 
   initGeometry() {
     // Geometry with more subdivisions for smoother displacement
-    this.geometry = new THREE.PlaneGeometry(1, 1, 256, 256);
+    this.geometry = new THREE.PlaneGeometry(2, 2, 256, 256);
 
     // Light
     this.light = new THREE.PointLight(0xffffff, 1);
-    this.light.position.set(2, 2, 3);
+    this.light.position.set(0, 0, 2);
     this.scene.add(this.light);
 
     // Normal Map Texture
@@ -181,14 +181,13 @@ class ShaderRenderer {
   }
 
   initCamera() {
-    const fov = 2 * Math.atan((this.sizes.height / 2) / 1) * (180 / Math.PI);
     this.camera = new THREE.PerspectiveCamera(
-      fov,
+      45,
       this.sizes.width / this.sizes.height,
       0.1,
       100
     );
-    this.camera.position.z = 1;
+    this.camera.position.z = 2;
     this.scene.add(this.camera);
   }
 
