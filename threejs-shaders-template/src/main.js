@@ -50,7 +50,7 @@ class ShaderRenderer {
 
     // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
-    
+
     // Material
     // Define lighting profiles
     this.profiles = {
@@ -98,7 +98,7 @@ class ShaderRenderer {
 
     // Debug controls
     const effectFolder = this.gui.addFolder('Effect Controls');
-    
+
     // Add profile switcher
     effectFolder.add({ profile: this.currentProfile }, 'profile', ['original', 'soft'])
       .onChange((value) => {
@@ -129,7 +129,7 @@ class ShaderRenderer {
       this.sizes.height,
       rtParams
     );
-    
+
     this.accumulationTargetB = new THREE.WebGLRenderTarget(
       this.sizes.width,
       this.sizes.height,
@@ -181,14 +181,14 @@ class ShaderRenderer {
   }
 
   initCamera() {
-    // Base camera
+    const fov = 2 * Math.atan((this.sizes.height / 2) / 1) * (180 / Math.PI);
     this.camera = new THREE.PerspectiveCamera(
-      75,
+      fov,
       this.sizes.width / this.sizes.height,
       0.1,
       100
     );
-    this.camera.position.set(0.25, -0.25, 1);
+    this.camera.position.z = 1;
     this.scene.add(this.camera);
   }
 
@@ -201,8 +201,7 @@ class ShaderRenderer {
   }
 
   initControls() {
-    this.controls = new OrbitControls(this.camera, this.canvas);
-    this.controls.enableDamping = true;
+    // Remove controls for background use
   }
 
   initEventListeners() {
@@ -236,7 +235,7 @@ class ShaderRenderer {
   updateTrailTexture() {
     // Update time uniform
     this.trailMaterial.uniforms.uTime.value += 0.01;
-    
+
     // Ping-pong between render targets
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;
@@ -260,7 +259,7 @@ class ShaderRenderer {
 
   animate() {
     // Update controls
-    this.controls.update();
+    //this.controls.update();
 
     // Update the trail texture
     this.updateTrailTexture();
