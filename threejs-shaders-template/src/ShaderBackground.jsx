@@ -146,46 +146,50 @@ const ShaderBackground = ({ className = '' }) => {
       accumulationTargetB.setSize(sizes.width, sizes.height);
     };
 
-    const updateMousePosition = (x, y) => {
-      // Get canvas bounds for correct coordinate mapping
+    let isPointerDown = false;
+    
+    const updatePointerPosition = (x, y) => {
       const rect = canvas.getBoundingClientRect();
-      mouse.x = (x - rect.left) / rect.width;
-      mouse.y = 1 - (y - rect.top) / rect.height;
+      const normalizedX = (x - rect.left) / rect.width;
+      const normalizedY = 1.0 - (y - rect.top) / rect.height;
+      
+      // Ensure values are within bounds
+      mouse.x = Math.max(0, Math.min(1, normalizedX));
+      mouse.y = Math.max(0, Math.min(1, normalizedY));
+      
+      // Force immediate render for smoother trails
+      updateTrailTexture();
+      renderer.render(scene, camera);
     };
 
-    const handleMouseMove = (event) => {
+    const handlePointerDown = (event) => {
       event.preventDefault();
-      updateMousePosition(event.clientX, event.clientY);
+      isPointerDown = true;
+      canvas.setPointerCapture(event.pointerId);
+      updatePointerPosition(event.clientX, event.clientY);
     };
 
-    const handleTouchMove = (event) => {
+    const handlePointerMove = (event) => {
       event.preventDefault();
-      event.stopPropagation();
-      const touch = event.touches[0];
-      if (touch) {
-        updateMousePosition(touch.clientX, touch.clientY);
-      }
+      if (event.pointerType === 'touch' && !isPointerDown) return;
+      updatePointerPosition(event.clientX, event.clientY);
     };
 
-    const handleTouchStart = (event) => {
+    const handlePointerUp = (event) => {
       event.preventDefault();
-      event.stopPropagation();
-      const touch = event.touches[0];
-      if (touch) {
-        updateMousePosition(touch.clientX, touch.clientY);
-      }
+      isPointerDown = false;
+      canvas.releasePointerCapture(event.pointerId);
     };
 
     // Initial size setup
     handleResize();
 
-    // Add event listeners directly to canvas
-    canvas.style.touchAction = 'none'; // Prevent default touch actions
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('touchstart', handleTouchStart);
-    canvas.addEventListener('touchmove', handleTouchMove);
-    canvas.addEventListener('touchend', (e) => e.preventDefault());
-    canvas.addEventListener('touchcancel', (e) => e.preventDefault());
+    // Use Pointer events for unified mouse/touch handling
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('pointerdown', handlePointerDown, { passive: false });
+    canvas.addEventListener('pointermove', handlePointerMove, { passive: false });
+    canvas.addEventListener('pointerup', handlePointerUp, { passive: false });
+    canvas.addEventListener('pointercancel', handlePointerUp, { passive: false });
     window.addEventListener('resize', handleResize);
 
     // Start animation
