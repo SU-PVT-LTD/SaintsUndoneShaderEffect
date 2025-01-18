@@ -11,19 +11,16 @@ uniform float uDiffuseStrength;
 uniform float uSpecularStrength;
 uniform float uSpecularPower;
 uniform float uWrap;
-uniform float uCursorVelocity;
 
 void main()
 {
-    // Calculate chromatic aberration offset based on cursor velocity
-    float aberrationStrength = min(uCursorVelocity * 0.1, 0.05);
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
-    float finalStrength = pow(accumulation.r, 2.0); // Much sharper falloff
+    float finalStrength = accumulation.r;
 
-    // Enhanced normal mapping
-    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.5 - 1.0;
-    vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength * 1.5));
+    // Apply reveal mask more strongly
+    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
+    vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength));
 
     // Store the reveal strength
     gl_FragColor.a = finalStrength;
@@ -38,22 +35,7 @@ void main()
     float specular = pow(max(dot(mixedNormal, halfDir), 0.0), uSpecularPower) * uSpecularStrength;
     
     // Blend the lighting components based on profile settings
-    // Calculate base color
-    vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
-    
-    // Apply refined chromatic aberration
-    vec3 color = baseColor * 0.85; // Dimmer base
-    if (finalStrength > 0.005) {
-        vec2 offsetR = vec2(aberrationStrength * 0.7, aberrationStrength * 0.2);
-        vec2 offsetB = vec2(-aberrationStrength * 0.7, -aberrationStrength * 0.2);
-        
-        float trailR = texture2D(uTrailTexture, vUv + offsetR).r;
-        float trailB = texture2D(uTrailTexture, vUv + offsetB).r;
-        
-        color.r = mix(baseColor.r, trailR * 0.9, finalStrength * aberrationStrength * 80.0);
-        color.b = mix(baseColor.b, trailB * 0.9, finalStrength * aberrationStrength * 80.0);
-        color.g = mix(baseColor.g, (trailR + trailB) * 0.45, finalStrength * aberrationStrength * 50.0);
-    }
+    vec3 color = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));

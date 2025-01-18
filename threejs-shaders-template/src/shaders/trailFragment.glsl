@@ -59,11 +59,11 @@ void main() {
     // Create new color with organic falloff
     vec4 newColor = vec4(1.0, 1.0, 1.0, strength);
     
-    // Blend with previous frame with faster decay
+    // Blend with previous frame
     vec4 accumulated = mix(
-        swirlPrev * (uAccumulationStrength * 0.95),
-        newColor,
-        strength * 0.8
+        swirlPrev * uAccumulationStrength,
+        max(newColor, swirlPrev),
+        strength * 0.7
     );
     
     gl_FragColor = accumulated;

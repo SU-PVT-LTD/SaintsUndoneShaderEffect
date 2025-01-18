@@ -14,8 +14,6 @@ class ShaderRenderer {
 
     // Mouse
     this.mouse = new THREE.Vector2();
-    this.previousMouse = new THREE.Vector2();
-    this.cursorVelocity = 0;
 
     // Canvas
     this.canvas = document.querySelector("canvas.webgl");
@@ -89,8 +87,7 @@ class ShaderRenderer {
         uDiffuseStrength: { value: this.profiles.soft.diffuseStrength },
         uSpecularStrength: { value: this.profiles.soft.specularStrength },
         uSpecularPower: { value: this.profiles.soft.specularPower },
-        uWrap: { value: this.profiles.soft.wrap },
-        uCursorVelocity: { value: 0.0 }
+        uWrap: { value: this.profiles.soft.wrap }
       },
       side: THREE.DoubleSide,
     });
@@ -214,14 +211,8 @@ class ShaderRenderer {
   }
 
   handleMouseMove(event) {
-    this.previousMouse.copy(this.mouse);
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
-    
-    // Calculate cursor velocity
-    const dx = this.mouse.x - this.previousMouse.x;
-    const dy = this.mouse.y - this.previousMouse.y;
-    this.cursorVelocity = Math.sqrt(dx * dx + dy * dy);
   }
 
   handleResize() {
@@ -270,10 +261,6 @@ class ShaderRenderer {
   animate() {
     // Update controls
     this.controls.update();
-    
-    // Update cursor velocity uniform and apply decay
-    this.material.uniforms.uCursorVelocity.value = this.cursorVelocity;
-    this.cursorVelocity *= 0.75; // Much faster decay for subtler effect
 
     // Update the trail texture
     this.updateTrailTexture();
