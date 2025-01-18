@@ -104,6 +104,14 @@ class ShaderRenderer {
     // Debug controls
     const effectFolder = this.gui.addFolder('Effect Controls');
     
+    // Shader effect controls
+    effectFolder.add(this.material.uniforms.uChromaticStrength, 'value', 0, 0.5, 0.001).name('Chromatic Strength');
+    effectFolder.add(this.material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
+    effectFolder.add(this.material.uniforms.uEffectRadius, 'value', 0.1, 0.5, 0.01).name('Radius');
+    effectFolder.add(this.material.uniforms.uSpecularStrength, 'value', 0, 1, 0.01).name('Specular');
+    effectFolder.add(this.material.uniforms.uAmbient, 'value', 0, 1, 0.01).name('Ambient');
+    effectFolder.add(this.material.uniforms.uDiffuseStrength, 'value', 0, 2, 0.01).name('Diffuse');
+    
     // Add profile switcher
     effectFolder.add({ profile: this.currentProfile }, 'profile', ['original', 'soft'])
       .onChange((value) => {
