@@ -53,6 +53,27 @@ const ShaderBackground = ({ className = '' }) => {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
+      // Create GUI controls
+      const gui = new GUI();
+      
+      // Effect controls folder
+      const effectFolder = gui.addFolder('Effect Controls');
+      effectFolder.add(material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
+      effectFolder.add(material.uniforms.uEffectRadius, 'value', 0.05, 0.5, 0.01).name('Radius');
+      effectFolder.add(material.uniforms.uAmbient, 'value', 0, 1, 0.01).name('Ambient Light');
+      effectFolder.add(material.uniforms.uDiffuseStrength, 'value', 0, 2, 0.01).name('Diffuse Strength');
+      effectFolder.add(material.uniforms.uSpecularStrength, 'value', 0, 2, 0.01).name('Specular Strength');
+      effectFolder.add(material.uniforms.uSpecularPower, 'value', 1, 64, 1).name('Specular Power');
+      effectFolder.add(material.uniforms.uWrap, 'value', 0, 1, 0.01).name('Light Wrap');
+
+      // Fluid controls folder
+      const fluidFolder = gui.addFolder('Fluid Controls');
+      fluidFolder.add(trailMaterial.uniforms.uAccumulationStrength, 'value', 0.9, 0.999, 0.001).name('Trail Length');
+      fluidFolder.add(trailMaterial.uniforms.uTurbulenceScale, 'value', 1, 20, 0.1).name('Turbulence Scale');
+      fluidFolder.add(trailMaterial.uniforms.uTurbulenceStrength, 'value', 0, 0.5, 0.01).name('Turbulence Strength');
+      fluidFolder.add(trailMaterial.uniforms.uEdgeSharpness, 'value', 0.01, 0.3, 0.01).name('Edge Sharpness');
+      fluidFolder.add(trailMaterial.uniforms.uSwirlStrength, 'value', 0, 0.1, 0.001).name('Swirl Strength');
+
     // Initialize camera
     const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100);
     camera.position.z = 2;
