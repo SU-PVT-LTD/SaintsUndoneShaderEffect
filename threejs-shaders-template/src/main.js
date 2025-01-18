@@ -41,7 +41,18 @@ class ShaderRenderer {
 
   initGeometry() {
     // Geometry with more subdivisions for smoother displacement
-    this.geometry = new THREE.PlaneGeometry(2, 2, 256, 256);
+    this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 256, 256);
+    
+    // Add size controls to GUI
+    const sizeFolder = this.gui.addFolder('Size Controls');
+    sizeFolder.add({ width: 1.5 }, 'width', 0.1, 4.0, 0.1)
+      .onChange((value) => {
+        this.mesh.scale.x = value;
+      });
+    sizeFolder.add({ height: 1.5 }, 'height', 0.1, 4.0, 0.1)
+      .onChange((value) => {
+        this.mesh.scale.y = value;
+      });
 
     // Light
     this.light = new THREE.PointLight(0xffffff, 1);
