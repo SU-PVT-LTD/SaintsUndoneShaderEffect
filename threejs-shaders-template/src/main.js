@@ -92,9 +92,9 @@ class ShaderRenderer {
         uSpecularPower: { value: this.profiles.soft.specularPower },
         uWrap: { value: this.profiles.soft.wrap },
         uMouseVelocity: { value: this.mouseVelocity },
-        uChromaticStrength: { value: 0.15 },
-        uVelocityScale: { value: 1.0 },
-        uVelocityMax: { value: 5.0 }
+        uChromaticStrength: { value: 0.05 },
+        uVelocityScale: { value: 0.5 },
+        uVelocityMax: { value: 2.0 }
       },
       side: THREE.DoubleSide,
     });
@@ -108,9 +108,9 @@ class ShaderRenderer {
     
     // Shader effect controls
     const chromaticFolder = effectFolder.addFolder('Chromatic Aberration');
-    chromaticFolder.add(this.material.uniforms.uChromaticStrength, 'value', 0, 0.5, 0.001).name('Strength');
-    chromaticFolder.add(this.material.uniforms.uVelocityScale, 'value', 0, 5, 0.1).name('Velocity Scale');
-    chromaticFolder.add(this.material.uniforms.uVelocityMax, 'value', 1, 10, 0.1).name('Velocity Max');
+    chromaticFolder.add(this.material.uniforms.uChromaticStrength, 'value', 0, 0.2, 0.001).name('Strength');
+    chromaticFolder.add(this.material.uniforms.uVelocityScale, 'value', 0, 2, 0.1).name('Velocity Scale');
+    chromaticFolder.add(this.material.uniforms.uVelocityMax, 'value', 0.5, 5, 0.1).name('Velocity Max');
     effectFolder.add(this.material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
     effectFolder.add(this.material.uniforms.uEffectRadius, 'value', 0.1, 0.5, 0.01).name('Radius');
     effectFolder.add(this.material.uniforms.uSpecularStrength, 'value', 0, 1, 0.01).name('Specular');
