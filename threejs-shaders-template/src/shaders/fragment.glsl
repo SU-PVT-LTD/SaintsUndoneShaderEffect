@@ -45,21 +45,13 @@ void main()
     // Blend the lighting components based on profile settings
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
-    // Apply enhanced chromatic aberration
-    float edgeIntensity = length(normalMap.xy) * 2.0;
-    vec2 chromaticOffset = chromatic * 5.0 * edgeIntensity * normalize(uMouseVelocity);
-    vec2 redUV = vUv + chromaticOffset;
-    vec2 blueUV = vUv - chromaticOffset;
-    
+    // Apply subtle chromatic aberration based on normal map edges
+    float edgeIntensity = length(normalMap.xy);
     vec3 color = vec3(
-        texture2D(uTrailTexture, redUV).r * 0.5 + baseColor.r,
+        texture2D(uTrailTexture, redOffset).r * edgeIntensity * chromatic + baseColor.r,
         baseColor.g,
-        texture2D(uTrailTexture, blueUV).b * 0.5 + baseColor.b
+        texture2D(uTrailTexture, blueOffset).b * edgeIntensity * chromatic + baseColor.b
     );
-    
-    // Enhance edge separation
-    color.r += edgeIntensity * chromatic * 2.0;
-    color.b -= edgeIntensity * chromatic * 2.0;
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));
