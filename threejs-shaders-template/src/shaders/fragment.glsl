@@ -16,8 +16,11 @@ uniform float uChromaticStrength;
 
 void main()
 {
+    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
+    float normalStrength = length(normalMap.xy);
+    
     float velocity = length(uMouseVelocity);
-    float chromatic = min(velocity * uChromaticStrength, 0.01);
+    float chromatic = min(velocity * uChromaticStrength * normalStrength, 0.005);
     
     // Sample with chromatic aberration
     vec2 redOffset = vUv + chromatic * vec2(1.0, 0.0);
@@ -27,7 +30,6 @@ void main()
     float finalStrength = accumulation.r;
 
     // Apply reveal mask more strongly
-    vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
     vec3 mixedNormal = normalize(mix(vNormal, normalMap, finalStrength));
 
     // Store the reveal strength
