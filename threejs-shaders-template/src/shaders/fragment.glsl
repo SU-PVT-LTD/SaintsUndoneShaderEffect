@@ -44,25 +44,17 @@ void main()
     // Blend the lighting components based on profile settings
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
 
-    // Apply chromatic aberration only to the trails with enhanced edge preservation
-    float edgeIntensity = pow(length(normalMap.xy), 1.5); // Sharper edge falloff
+    // Apply chromatic aberration only to the trails
+    float edgeIntensity = length(normalMap.xy);
     vec3 color = baseColor;
     
     if (finalStrength > 0.0) {
-        // Sample trail texture with reduced chromatic spread for edges
-        float edgeMask = smoothstep(0.2, 0.8, edgeIntensity);
-        vec2 adjustedRedOffset = mix(vUv, redOffset, 1.0 - edgeMask);
-        vec2 adjustedBlueOffset = mix(vUv, blueOffset, 1.0 - edgeMask);
-        
         vec3 trailColor = vec3(
-            texture2D(uTrailTexture, adjustedRedOffset).r,
+            texture2D(uTrailTexture, redOffset).r,
             texture2D(uTrailTexture, vUv).g,
-            texture2D(uTrailTexture, adjustedBlueOffset).b
+            texture2D(uTrailTexture, blueOffset).b
         );
-        
-        // Blend with enhanced edge preservation
-        float blendStrength = finalStrength * (1.0 + edgeIntensity * 0.5);
-        color = mix(color, trailColor, blendStrength);
+        color = mix(color, trailColor, finalStrength * edgeIntensity);
     }
 
     // Ensure we don't exceed maximum brightness
