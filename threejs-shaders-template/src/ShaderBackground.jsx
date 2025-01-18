@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import vertexShader from './shaders/vertex.glsl';
@@ -14,10 +13,10 @@ const ShaderBackground = ({ className = '' }) => {
     const canvas = canvasRef.current;
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
     rendererRef.current = renderer;
-    
+
     const scene = new THREE.Scene();
     const mouse = new THREE.Vector2();
-    
+
     const sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -126,10 +125,33 @@ const ShaderBackground = ({ className = '' }) => {
       accumulationTargetB.setSize(sizes.width, sizes.height);
     };
 
-    const handleMouseMove = (event) => {
-      mouse.x = event.clientX / sizes.width;
-      mouse.y = 1 - event.clientY / sizes.height;
+    const updateMousePosition = (x, y) => {
+      mouse.x = x / sizes.width;
+      mouse.y = 1 - y / sizes.height;
     };
+
+    const handleMouseMove = (event) => {
+      event.preventDefault();
+      updateMousePosition(event.clientX, event.clientY);
+    };
+
+    const handleTouchMove = (event) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      updateMousePosition(touch.clientX, touch.clientY);
+    };
+
+    // Initial size setup
+    handleResize();
+
+    // Add event listeners
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchstart', handleTouchMove, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    // Start animation
+    animate();
 
     const updateTrailTexture = () => {
       trailMaterial.uniforms.uTime.value += 0.01;
@@ -155,14 +177,12 @@ const ShaderBackground = ({ className = '' }) => {
       requestAnimationFrame(animate);
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
-    animate();
 
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleTouchMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       renderer.dispose();
       material.dispose();
       geometry.dispose();
