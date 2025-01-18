@@ -52,8 +52,8 @@ const ShaderBackground = ({ className = '' }) => {
         uNormalMap: { value: normalMap },
         uLightPosition: { value: light.position },
         uDecay: { value: 0.95 },
-        uDisplacementStrength: { value: 0.05 },
-        uEffectRadius: { value: 0.15 },
+        uDisplacementStrength: { value: 0.018 },
+        uEffectRadius: { value: 0.12 },
         uAmbient: { value: 0.5 },
         uDiffuseStrength: { value: 0.7 },
         uSpecularStrength: { value: 0.3 },
@@ -122,21 +122,23 @@ const ShaderBackground = ({ className = '' }) => {
       mouse.y = Math.max(0, Math.min(1, y));
     };
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     const handlePointerMove = (e) => {
       e.preventDefault();
+      if (isMobile && e.type !== 'touchstart') return;
+      
       const x = e.touches ? e.touches[0].clientX : e.clientX;
       const y = e.touches ? e.touches[0].clientY : e.clientY;
       updatePointerPosition(x, y);
     };
 
-    // Add pointer event listeners
-    canvas.addEventListener('pointerdown', () => {
-      canvas.setPointerCapture(event.pointerId);
-    });
-    
-    canvas.addEventListener('pointermove', handlePointerMove);
-    canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
-    canvas.addEventListener('mousemove', handlePointerMove);
+    if (isMobile) {
+      canvas.addEventListener('touchstart', handlePointerMove, { passive: false });
+    } else {
+      canvas.addEventListener('mousemove', handlePointerMove);
+      canvas.addEventListener('pointermove', handlePointerMove);
+    }
     window.addEventListener('resize', handleResize);
 
     // Prevent default touch behaviors
