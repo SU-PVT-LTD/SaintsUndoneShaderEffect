@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GUI } from 'lil-gui';
@@ -115,8 +114,6 @@ const ShaderBackground = ({ className = '' }) => {
     renderer.setRenderTarget(null);
 
     const updatePointerPosition = (clientX, clientY) => {
-      if (!isPointerActiveRef.current) return;
-
       const rect = canvas.getBoundingClientRect();
       const x = (clientX - rect.left) / rect.width;
       const y = 1.0 - (clientY - rect.top) / rect.height;
@@ -125,9 +122,32 @@ const ShaderBackground = ({ className = '' }) => {
       mouse.y = Math.max(0, Math.min(1, y));
     };
 
+    // Touch and mouse event handlers
+    const pointerMove = (e) => {
+      e.preventDefault();
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const pointerDown = (e) => {
+      e.preventDefault();
+      updatePointerPosition(e.clientX, e.clientY);
+    };
+
+    const pointerUp = (e) => {
+      e.preventDefault();
+    };
+
+    // Event listeners with options for better touch handling
+    canvas.addEventListener('pointermove', pointerMove, { passive: false, capture: true });
+    canvas.addEventListener('pointerdown', pointerDown, { passive: false });
+    canvas.addEventListener('pointerup', pointerUp, { passive: false });
+    canvas.addEventListener('pointercancel', pointerUp, { passive: false });
+    window.addEventListener('resize', handleResize);
+
+
     const updateTrailTexture = () => {
       trailMaterial.uniforms.uTime.value += 0.01;
-      
+
       const currentTarget = accumulationTargetA;
       const previousTarget = accumulationTargetB;
 
@@ -163,29 +183,6 @@ const ShaderBackground = ({ className = '' }) => {
       accumulationTargetB.setSize(sizes.width, sizes.height);
     };
 
-    // Modern pointer event handlers
-    const pointerMove = (e) => {
-      if (isPointerActiveRef.current) {
-        updatePointerPosition(e.clientX, e.clientY);
-      }
-    };
-
-    const pointerDown = (e) => {
-      isPointerActiveRef.current = true;
-      canvas.setPointerCapture(e.pointerId);
-      updatePointerPosition(e.clientX, e.clientY);
-    };
-
-    const pointerUp = () => {
-      isPointerActiveRef.current = false;
-    };
-
-    // Event listeners
-    canvas.addEventListener('pointermove', pointerMove, { passive: true });
-    canvas.addEventListener('pointerdown', pointerDown);
-    canvas.addEventListener('pointerup', pointerUp);
-    canvas.addEventListener('pointercancel', pointerUp);
-    window.addEventListener('resize', handleResize);
 
     // Initial setup
     handleResize();
@@ -198,7 +195,7 @@ const ShaderBackground = ({ className = '' }) => {
       canvas.removeEventListener('pointerup', pointerUp);
       canvas.removeEventListener('pointercancel', pointerUp);
       window.removeEventListener('resize', handleResize);
-      
+
       renderer.dispose();
       material.dispose();
       geometry.dispose();
