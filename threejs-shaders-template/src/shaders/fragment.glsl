@@ -16,10 +16,10 @@ uniform float uCursorVelocity;
 void main()
 {
     // Calculate chromatic aberration offset based on cursor velocity
-    float aberrationStrength = min(uCursorVelocity * 0.2, 0.1);
+    float aberrationStrength = min(uCursorVelocity * 0.1, 0.05);
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
-    float finalStrength = pow(accumulation.r, 1.5); // Sharper falloff
+    float finalStrength = pow(accumulation.r, 2.0); // Much sharper falloff
 
     // Enhanced normal mapping
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.5 - 1.0;
