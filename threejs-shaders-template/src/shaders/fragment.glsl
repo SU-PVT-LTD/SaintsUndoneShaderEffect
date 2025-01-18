@@ -18,10 +18,9 @@ void main()
     float velocity = length(uMouseVelocity);
     float chromatic = velocity * uChromaticStrength;
 
-    // Sample with refined chromatic aberration
-    float smoothChromatic = smoothstep(0.0, 0.1, chromatic) * 0.5 * chromatic;
-    vec2 redOffset = vUv + smoothChromatic * normalize(uMouseVelocity);
-    vec2 blueOffset = vUv - smoothChromatic * normalize(uMouseVelocity);
+    // Sample with chromatic aberration
+    vec2 redOffset = vUv + chromatic * normalize(uMouseVelocity);
+    vec2 blueOffset = vUv - chromatic * normalize(uMouseVelocity);
 
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
