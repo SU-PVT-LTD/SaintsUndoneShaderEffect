@@ -126,8 +126,10 @@ const ShaderBackground = ({ className = '' }) => {
     };
 
     const updateMousePosition = (x, y) => {
-      mouse.x = x / sizes.width;
-      mouse.y = 1 - y / sizes.height;
+      // Get canvas bounds for correct coordinate mapping
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = (x - rect.left) / rect.width;
+      mouse.y = 1 - (y - rect.top) / rect.height;
     };
 
     const handleMouseMove = (event) => {
@@ -144,11 +146,11 @@ const ShaderBackground = ({ className = '' }) => {
     // Initial size setup
     handleResize();
 
-    // Add event listeners
+    // Add event listeners directly to canvas instead of window
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('touchstart', handleTouchMove);
+    canvas.addEventListener('touchmove', handleTouchMove);
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchstart', handleTouchMove, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     // Start animation
     animate();
