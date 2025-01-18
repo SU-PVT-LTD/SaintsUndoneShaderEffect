@@ -122,37 +122,21 @@ const ShaderBackground = ({ className = '' }) => {
       mouse.y = Math.max(0, Math.min(1, y));
     };
 
-    let isTrackingTouch = false;
-
-    const handleTouchStart = (e) => {
+    const handlePointerMove = (e) => {
       e.preventDefault();
-      isTrackingTouch = true;
-      const touch = e.touches[0];
-      updatePointerPosition(touch.clientX, touch.clientY);
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = e.touches ? e.touches[0].clientY : e.clientY;
+      updatePointerPosition(x, y);
     };
 
-    const handleTouchMove = (e) => {
-      e.preventDefault();
-      if (!isTrackingTouch) return;
-      const touch = e.touches[0];
-      updatePointerPosition(touch.clientX, touch.clientY);
-    };
-
-    const handleTouchEnd = () => {
-      isTrackingTouch = false;
-    };
-
-    const handleMouseMove = (e) => {
-      e.preventDefault();
-      updatePointerPosition(e.clientX, e.clientY);
-    };
-
-    // Add touch-specific event listeners
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd);
-    canvas.addEventListener('touchcancel', handleTouchEnd);
-    canvas.addEventListener('mousemove', handleMouseMove, { passive: false });
+    // Add pointer event listeners
+    canvas.addEventListener('pointerdown', () => {
+      canvas.setPointerCapture(event.pointerId);
+    });
+    
+    canvas.addEventListener('pointermove', handlePointerMove);
+    canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+    canvas.addEventListener('mousemove', handlePointerMove);
     window.addEventListener('resize', handleResize);
 
     // Prevent default touch behaviors
@@ -206,11 +190,10 @@ const ShaderBackground = ({ className = '' }) => {
 
     return () => {
       frameRef.current && cancelAnimationFrame(frameRef.current);
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
-      canvas.removeEventListener('touchcancel', handleTouchEnd);
-      canvas.removeEventListener('mousemove', handleMouseMove);
+      canvas.removeEventListener('pointerdown', handlePointerMove);
+      canvas.removeEventListener('pointermove', handlePointerMove);
+      canvas.removeEventListener('touchmove', handlePointerMove);
+      canvas.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('resize', handleResize);
 
       renderer.dispose();
