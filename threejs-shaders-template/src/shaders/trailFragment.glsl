@@ -7,7 +7,13 @@ uniform float uTurbulenceStrength;
 uniform float uEdgeSharpness;
 uniform float uSwirlStrength;
 uniform float uTime;
+uniform vec2 uVelocity;
 varying vec2 vUv;
+
+float getVelocityFactor() {
+    float speed = length(uVelocity);
+    return clamp(speed * 2.0, 0.0, 1.0);
+}
 
 // Noise functions
 float random(vec2 st) {
@@ -40,7 +46,10 @@ void main() {
     // Add turbulence
     float time = float(uMousePos.x + uMousePos.y) * 10.0;
     vec2 noiseCoord = vUv * 8.0 + time * 0.1;
-    float turbulence = noise(noiseCoord) * 0.15;
+    float velocityFactor = getVelocityFactor();
+    float baseTurbulence = noise(noiseCoord) * 0.15;
+    float velocityTurbulence = noise(noiseCoord * 2.0 + uVelocity * 0.5) * velocityFactor * 0.3;
+    float turbulence = mix(baseTurbulence, velocityTurbulence, velocityFactor);
     
     // Create organic, fluid-like falloff
     float baseStrength = 1.0 - smoothstep(0.0, 0.15, dist + turbulence);
@@ -51,7 +60,7 @@ void main() {
     vec2 swirl = vec2(
         noise(noiseCoord + 1.0),
         noise(noiseCoord + 2.0)
-    ) * 0.02 * strength;
+    ) * (0.02 + velocityFactor * 0.05) * strength;
     
     // Sample previous color with swirl offset
     vec4 swirlPrev = texture2D(uPreviousTexture, vUv + swirl);
