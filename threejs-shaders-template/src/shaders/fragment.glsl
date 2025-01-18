@@ -50,9 +50,9 @@ void main()
     
     if (finalStrength > 0.0) {
         vec3 trailColor = vec3(
-            texture2D(uTrailTexture, redOffset).r,
-            texture2D(uTrailTexture, vUv).g,
-            texture2D(uTrailTexture, blueOffset).b
+            texture2D(uTrailTexture, redOffset).r * 1.2,
+            texture2D(uTrailTexture, vUv).g * 1.2,
+            texture2D(uTrailTexture, blueOffset).b * 0.6
         );
         color = mix(color, trailColor, finalStrength * edgeIntensity);
     }
