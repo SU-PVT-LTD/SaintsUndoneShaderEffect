@@ -1,8 +1,8 @@
+
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
 uniform vec2 uMouse;
-uniform vec2 uMouseVelocity;
 uniform sampler2D uNormalMap;
 uniform vec3 uLightPosition;
 uniform sampler2D uTrailTexture;
@@ -11,17 +11,10 @@ uniform float uDiffuseStrength;
 uniform float uSpecularStrength;
 uniform float uSpecularPower;
 uniform float uWrap;
-uniform float uChromaticStrength;
 
 void main()
 {
-    float velocity = length(uMouseVelocity);
-    float chromatic = velocity * uChromaticStrength;
-
-    // Sample with chromatic aberration
-    vec2 redOffset = vUv + chromatic * normalize(uMouseVelocity);
-    vec2 blueOffset = vUv - chromatic * normalize(uMouseVelocity);
-
+    // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
 
@@ -40,25 +33,12 @@ void main()
     // Profile-based lighting
     float diffuse = max((dot(mixedNormal, lightDir) + uWrap) / (1.0 + uWrap), 0.0);
     float specular = pow(max(dot(mixedNormal, halfDir), 0.0), uSpecularPower) * uSpecularStrength;
-
-    // Blend the lighting components based on profile settings
-    vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
-
-    // Apply chromatic aberration only to the trails
-    float edgeIntensity = length(normalMap.xy);
-    vec3 color = baseColor;
     
-    if (finalStrength > 0.0) {
-        vec3 trailColor = vec3(
-            texture2D(uTrailTexture, redOffset).r,
-            texture2D(uTrailTexture, vUv).g,
-            texture2D(uTrailTexture, blueOffset).b
-        );
-        color = mix(color, trailColor, finalStrength * edgeIntensity);
-    }
-
+    // Blend the lighting components based on profile settings
+    vec3 color = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
+    
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));
-
+    
     gl_FragColor = vec4(color, 1.0);
 }

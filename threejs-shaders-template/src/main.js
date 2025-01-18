@@ -14,9 +14,6 @@ class ShaderRenderer {
 
     // Mouse
     this.mouse = new THREE.Vector2();
-    this.prevMouse = new THREE.Vector2();
-    this.mouseVelocity = new THREE.Vector2();
-    this.lastTime = 0;
 
     // Canvas
     this.canvas = document.querySelector("canvas.webgl");
@@ -90,11 +87,7 @@ class ShaderRenderer {
         uDiffuseStrength: { value: this.profiles.soft.diffuseStrength },
         uSpecularStrength: { value: this.profiles.soft.specularStrength },
         uSpecularPower: { value: this.profiles.soft.specularPower },
-        uWrap: { value: this.profiles.soft.wrap },
-        uMouseVelocity: { value: this.mouseVelocity },
-        uChromaticStrength: { value: 0.05 },
-        uVelocityScale: { value: 0.5 },
-        uVelocityMax: { value: 2.0 }
+        uWrap: { value: this.profiles.soft.wrap }
       },
       side: THREE.DoubleSide,
     });
@@ -105,17 +98,6 @@ class ShaderRenderer {
 
     // Debug controls
     const effectFolder = this.gui.addFolder('Effect Controls');
-    
-    // Shader effect controls
-    const chromaticFolder = effectFolder.addFolder('Chromatic Aberration');
-    chromaticFolder.add(this.material.uniforms.uChromaticStrength, 'value', 0, 0.2, 0.001).name('Strength');
-    chromaticFolder.add(this.material.uniforms.uVelocityScale, 'value', 0, 2, 0.1).name('Velocity Scale');
-    chromaticFolder.add(this.material.uniforms.uVelocityMax, 'value', 0.5, 5, 0.1).name('Velocity Max');
-    effectFolder.add(this.material.uniforms.uDisplacementStrength, 'value', 0, 0.2, 0.001).name('Displacement');
-    effectFolder.add(this.material.uniforms.uEffectRadius, 'value', 0.1, 0.5, 0.01).name('Radius');
-    effectFolder.add(this.material.uniforms.uSpecularStrength, 'value', 0, 1, 0.01).name('Specular');
-    effectFolder.add(this.material.uniforms.uAmbient, 'value', 0, 1, 0.01).name('Ambient');
-    effectFolder.add(this.material.uniforms.uDiffuseStrength, 'value', 0, 2, 0.01).name('Diffuse');
     
     // Add profile switcher
     effectFolder.add({ profile: this.currentProfile }, 'profile', ['original', 'soft'])
@@ -229,25 +211,8 @@ class ShaderRenderer {
   }
 
   handleMouseMove(event) {
-    const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastTime) / 1000;
-    this.lastTime = currentTime;
-
-    this.prevMouse.copy(this.mouse);
     this.mouse.x = event.clientX / this.sizes.width;
     this.mouse.y = 1 - event.clientY / this.sizes.height;
-    
-    this.mouseVelocity.subVectors(this.mouse, this.prevMouse);
-    if (deltaTime > 0) {
-      this.mouseVelocity.divideScalar(deltaTime);
-      // Scale and clamp velocity
-      this.mouseVelocity.multiplyScalar(this.material.uniforms.uVelocityScale.value);
-      const maxVel = this.material.uniforms.uVelocityMax.value;
-      const currentLength = this.mouseVelocity.length();
-      if (currentLength > maxVel) {
-        this.mouseVelocity.multiplyScalar(maxVel / currentLength);
-      }
-    }
   }
 
   handleResize() {
