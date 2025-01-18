@@ -11,9 +11,12 @@ uniform float uDiffuseStrength;
 uniform float uSpecularStrength;
 uniform float uSpecularPower;
 uniform float uWrap;
+uniform float uCursorVelocity;
 
 void main()
 {
+    // Calculate chromatic aberration offset based on cursor velocity
+    float aberrationStrength = min(uCursorVelocity * 0.01, 0.01);
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
@@ -35,7 +38,14 @@ void main()
     float specular = pow(max(dot(mixedNormal, halfDir), 0.0), uSpecularPower) * uSpecularStrength;
     
     // Blend the lighting components based on profile settings
-    vec3 color = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
+    // Calculate base color
+    vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
+    
+    // Apply chromatic aberration
+    vec3 color;
+    color.r = baseColor.r;
+    color.g = mix(baseColor.g, texture2D(uTrailTexture, vUv + vec2(aberrationStrength, 0.0)).g, aberrationStrength * 20.0);
+    color.b = mix(baseColor.b, texture2D(uTrailTexture, vUv - vec2(aberrationStrength, 0.0)).b, aberrationStrength * 20.0);
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));
