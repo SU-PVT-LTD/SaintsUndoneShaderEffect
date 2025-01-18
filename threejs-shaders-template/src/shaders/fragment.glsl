@@ -41,11 +41,18 @@ void main()
     // Calculate base color
     vec3 baseColor = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
     
-    // Apply chromatic aberration
-    vec3 color;
-    color.r = baseColor.r;
-    color.g = mix(baseColor.g, texture2D(uTrailTexture, vUv + vec2(aberrationStrength, 0.0)).g, aberrationStrength * 20.0);
-    color.b = mix(baseColor.b, texture2D(uTrailTexture, vUv - vec2(aberrationStrength, 0.0)).b, aberrationStrength * 20.0);
+    // Apply chromatic aberration only along the trail
+    vec3 color = baseColor;
+    if (finalStrength > 0.01) {
+        vec2 offsetR = vec2(aberrationStrength * 0.5, 0.0);
+        vec2 offsetB = vec2(-aberrationStrength * 0.5, 0.0);
+        
+        float trailR = texture2D(uTrailTexture, vUv + offsetR).r;
+        float trailB = texture2D(uTrailTexture, vUv + offsetB).r;
+        
+        color.r = mix(baseColor.r, trailR, finalStrength * aberrationStrength * 30.0);
+        color.b = mix(baseColor.b, trailB, finalStrength * aberrationStrength * 30.0);
+    }
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));
