@@ -1,4 +1,3 @@
-
 varying vec2 vUv;
 varying vec3 vNormal;
 varying vec3 vPosition;
@@ -11,6 +10,7 @@ uniform float uDiffuseStrength;
 uniform float uSpecularStrength;
 uniform float uSpecularPower;
 uniform float uWrap;
+uniform vec3 uColor;
 
 void main()
 {
@@ -35,7 +35,8 @@ void main()
     float specular = pow(max(dot(mixedNormal, halfDir), 0.0), uSpecularPower) * uSpecularStrength;
     
     // Blend the lighting components based on profile settings
-    vec3 color = vec3(0.722) * (uAmbient + diffuse * uDiffuseStrength + specular);
+    vec3 baseColor = vec3(0.5) * (uAmbient + diffuse * uDiffuseStrength + specular);
+    vec3 color = baseColor * uColor; // Apply the color tint
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));

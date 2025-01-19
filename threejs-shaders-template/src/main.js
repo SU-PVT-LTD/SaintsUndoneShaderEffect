@@ -56,11 +56,11 @@ class ShaderRenderer {
 
     // Light
     this.light = new THREE.PointLight(0xffffff, 1);
-    this.light.position.set(0, 0, 2);
+    this.light.position.set(2, 2, 2);
     this.scene.add(this.light);
 
     // Normal Map Texture
-    const normalMap = new THREE.TextureLoader().load('/T_tfilfair_2K_N.png');
+    const normalMap = new THREE.TextureLoader().load('/NormalMap7.png');
 
     // Material
     // Define lighting profiles
@@ -70,19 +70,28 @@ class ShaderRenderer {
         diffuseStrength: 1.0,
         specularStrength: 0.5,
         specularPower: 32.0,
-        wrap: 0.0
+        wrap: 0.0,
       },
       soft: {
         ambient: 0.5,
         diffuseStrength: 0.7,
         specularStrength: 0.3,
         specularPower: 16.0,
-        wrap: 0.5
-      }
+        wrap: 0.5,
+      },
+      purple: {
+        ambient: 0.4,
+        diffuseStrength: 0.6,
+        specularStrength: 0.8,
+        specularPower: 24.0,
+        wrap: 0.2,
+        color: new THREE.Color('#ec3249'), // Purple tint
+      },
     };
 
     this.currentProfile = 'soft';
 
+    // Update the material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
@@ -98,7 +107,8 @@ class ShaderRenderer {
         uDiffuseStrength: { value: this.profiles.soft.diffuseStrength },
         uSpecularStrength: { value: this.profiles.soft.specularStrength },
         uSpecularPower: { value: this.profiles.soft.specularPower },
-        uWrap: { value: this.profiles.soft.wrap }
+        uWrap: { value: this.profiles.soft.wrap },
+        uColor: { value: new THREE.Color(1, 1, 1) }, // Default to white
       },
       side: THREE.DoubleSide,
     });
@@ -111,16 +121,19 @@ class ShaderRenderer {
     const effectFolder = this.gui.addFolder('Effect Controls');
 
     // Add profile switcher
-    effectFolder.add({ profile: this.currentProfile }, 'profile', ['original', 'soft'])
-      .onChange((value) => {
-        this.currentProfile = value;
-        const profile = this.profiles[value];
-        this.material.uniforms.uAmbient.value = profile.ambient;
-        this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
-        this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
-        this.material.uniforms.uSpecularPower.value = profile.specularPower;
-        this.material.uniforms.uWrap.value = profile.wrap;
-      });
+    // Update GUI controls
+    effectFolder
+    .add({ profile: this.currentProfile }, 'profile', ['original', 'soft', 'purple'])
+    .onChange((value) => {
+      this.currentProfile = value;
+      const profile = this.profiles[value];
+      this.material.uniforms.uAmbient.value = profile.ambient;
+      this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
+      this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
+      this.material.uniforms.uSpecularPower.value = profile.specularPower;
+      this.material.uniforms.uWrap.value = profile.wrap;
+      this.material.uniforms.uColor.value = profile.color || new THREE.Color(1, 1, 1);
+    });
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
