@@ -1,8 +1,6 @@
-
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 html,
@@ -18,7 +16,7 @@ body {
   width: 100vw;
   height: 100vh;
   outline: none;
-  z-index: 0;
+  z-index: -1;
   touch-action: none;
   pointer-events: auto;
   cursor: none;
@@ -32,6 +30,4 @@ body {
   position: relative;
   z-index: 1;
   color: white;
-  width: 100vw;
-  height: 100vh;
 }

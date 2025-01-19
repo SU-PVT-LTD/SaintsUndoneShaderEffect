@@ -1,33 +1,11 @@
 import * as THREE from "three";
-import { Box } from "@mui/material";
-import { createRoot } from 'react-dom/client';
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "lil-gui";
 import vertexShader from "./shaders/vertex.glsl";
 import fragmentShader from "./shaders/fragment.glsl";
 import trailFragmentShader from "./shaders/trailFragment.glsl";
 import trailVertexShader from "./shaders/trailVertex.glsl";
 import "./style.css";
-
-function App() {
-  return (
-    <Box
-      sx={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <canvas className="webgl" id="webgl-canvas" /> {/* Added id for React */}
-    </Box>
-  );
-}
-
-// Initialize React
-const root = createRoot(document.getElementById('app'));
-root.render(<App />);
-
 
 class ShaderRenderer {
   constructor() {
@@ -39,7 +17,7 @@ class ShaderRenderer {
     this.trails = [];
     this.maxTrails = 3;
     this.trailSpeed = 0.005;
-
+    
     // Trail generator
     setInterval(() => {
       if (this.trails.length < this.maxTrails) {
@@ -55,7 +33,7 @@ class ShaderRenderer {
     }, 2000);
 
     // Canvas
-    this.canvas = document.getElementById("webgl-canvas"); // Use getElementById
+    this.canvas = document.querySelector("canvas.webgl");
 
     // Scene
     this.scene = new THREE.Scene();
@@ -81,7 +59,7 @@ class ShaderRenderer {
   initGeometry() {
     // Geometry with more subdivisions for smoother displacement
     this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 256, 256);
-
+    
     // Add size controls to GUI
     const sizeFolder = this.gui.addFolder('Size Controls');
     sizeFolder.add({ width: 1.5 }, 'width', 0.1, 4.0, 0.1)
@@ -162,17 +140,17 @@ class ShaderRenderer {
     // Add profile switcher
     // Update GUI controls
     effectFolder
-      .add({ profile: this.currentProfile }, 'profile', ['original', 'soft', 'purple'])
-      .onChange((value) => {
-        this.currentProfile = value;
-        const profile = this.profiles[value];
-        this.material.uniforms.uAmbient.value = profile.ambient;
-        this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
-        this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
-        this.material.uniforms.uSpecularPower.value = profile.specularPower;
-        this.material.uniforms.uWrap.value = profile.wrap;
-        this.material.uniforms.uColor.value = profile.color || new THREE.Color(1, 1, 1);
-      });
+    .add({ profile: this.currentProfile }, 'profile', ['original', 'soft', 'purple'])
+    .onChange((value) => {
+      this.currentProfile = value;
+      const profile = this.profiles[value];
+      this.material.uniforms.uAmbient.value = profile.ambient;
+      this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
+      this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
+      this.material.uniforms.uSpecularPower.value = profile.specularPower;
+      this.material.uniforms.uWrap.value = profile.wrap;
+      this.material.uniforms.uColor.value = profile.color || new THREE.Color(1, 1, 1);
+    });
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
@@ -282,14 +260,14 @@ class ShaderRenderer {
       // Move trail
       trail.position.x += Math.cos(trail.angle) * this.trailSpeed;
       trail.position.y += Math.sin(trail.angle) * this.trailSpeed;
-
+      
       // Reduce life
       trail.life -= 0.001;
-
+      
       // Remove if out of bounds or dead
-      return trail.life > 0 &&
-        trail.position.x >= 0 && trail.position.x <= 1 &&
-        trail.position.y >= 0 && trail.position.y <= 1;
+      return trail.life > 0 && 
+             trail.position.x >= 0 && trail.position.x <= 1 &&
+             trail.position.y >= 0 && trail.position.y <= 1;
     });
   }
 
@@ -322,11 +300,11 @@ class ShaderRenderer {
     // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
     // Update with cursor position first, then fall back to autonomous trails
-    this.trailMaterial.uniforms.uMousePos.value =
-      (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) ?
-        this.mouse :
-        (this.trails.length > 0 ? this.trails[0].position : new THREE.Vector2(-1, -1));
-
+    this.trailMaterial.uniforms.uMousePos.value = 
+      (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) ? 
+      this.mouse : 
+      (this.trails.length > 0 ? this.trails[0].position : new THREE.Vector2(-1, -1));
+    
     this.updateTrails();
 
     // Render accumulation
@@ -361,7 +339,5 @@ class ShaderRenderer {
   }
 }
 
-// Initialize the renderer when the script loads. Moved to after React rendering.
-window.addEventListener('load', () => { // Added event listener to ensure canvas exists
-  const shaderRenderer = new ShaderRenderer();
-})
+// Initialize the renderer when the script loads
+const shaderRenderer = new ShaderRenderer();
