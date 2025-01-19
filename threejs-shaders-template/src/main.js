@@ -257,17 +257,24 @@ class ShaderRenderer {
   updateTrails() {
     // Update existing trails
     this.trails = this.trails.filter(trail => {
-      // Move trail
+      // Move trail with bounce behavior
       trail.position.x += Math.cos(trail.angle) * this.trailSpeed;
       trail.position.y += Math.sin(trail.angle) * this.trailSpeed;
       
-      // Reduce life
-      trail.life -= 0.001;
+      // Bounce off edges
+      if (trail.position.x <= 0 || trail.position.x >= 1) {
+        trail.angle = Math.PI - trail.angle;
+        trail.position.x = Math.max(0, Math.min(1, trail.position.x));
+      }
+      if (trail.position.y <= 0 || trail.position.y >= 1) {
+        trail.angle = -trail.angle;
+        trail.position.y = Math.max(0, Math.min(1, trail.position.y));
+      }
       
-      // Remove if out of bounds or dead
-      return trail.life > 0 && 
-             trail.position.x >= 0 && trail.position.x <= 1 &&
-             trail.position.y >= 0 && trail.position.y <= 1;
+      // Reduce life
+      trail.life -= 0.0005;
+      
+      return trail.life > 0;
     });
   }
 
@@ -290,33 +297,38 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
-    // Update time uniform
     this.trailMaterial.uniforms.uTime.value += 0.01;
 
-    // Ping-pong between render targets
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;
 
-    // Update uniforms and set render target
+    // Set previous texture and prepare current target
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
     this.renderer.setRenderTarget(currentTarget);
+    
+    // Clear the current target
+    this.renderer.clear();
 
-    // First pass: Render autonomous trails
-    this.trails.forEach(trail => {
-      this.trailMaterial.uniforms.uMousePos.value = trail.position;
+    // Render previous state
+    this.trailMaterial.uniforms.uMousePos.value = new THREE.Vector2(-1, -1);
+    this.renderer.render(this.trailScene, this.trailCamera);
+
+    // Render all trails in a single pass
+    const allPositions = [...this.trails.map(t => t.position)];
+    if (this.mouse.x >= 0 && this.mouse.x <= 1 && this.mouse.y >= 0 && this.mouse.y <= 1) {
+      allPositions.push(this.mouse);
+    }
+
+    // Render each position
+    allPositions.forEach(position => {
+      this.trailMaterial.uniforms.uMousePos.value = position;
       this.renderer.render(this.trailScene, this.trailCamera);
     });
-    
-    // Second pass: Render cursor trail
-    if (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) {
-      this.trailMaterial.uniforms.uMousePos.value = this.mouse;
-      this.renderer.render(this.trailScene, this.trailCamera);
-    }
-    
-    // Update trail positions for next frame
+
+    // Update autonomous trails
     this.updateTrails();
-    
-    // Reset render target and update material
+
+    // Update main material and clean up
     this.renderer.setRenderTarget(null);
     this.material.uniforms.uTrailTexture.value = currentTarget.texture;
 
