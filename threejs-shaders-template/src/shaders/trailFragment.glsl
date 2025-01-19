@@ -9,7 +9,6 @@ uniform float uSwirlStrength;
 uniform float uTime;
 varying vec2 vUv;
 
-// Noise functions
 float random(vec2 st) {
     return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
 }
@@ -22,50 +21,49 @@ vec2 hash(vec2 p) {
 float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    
     vec2 u = f*f*(3.0-2.0*f);
-
-    return mix(mix(dot(hash(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)),
-                   dot(hash(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),
-               mix(dot(hash(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)),
-                   dot(hash(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x), u.y);
+    return mix(
+        mix(dot(hash(i + vec2(0.0,0.0)), f - vec2(0.0,0.0)),
+            dot(hash(i + vec2(1.0,0.0)), f - vec2(1.0,0.0)), u.x),
+        mix(dot(hash(i + vec2(0.0,1.0)), f - vec2(0.0,1.0)),
+            dot(hash(i + vec2(1.0,1.0)), f - vec2(1.0,1.0)), u.x),
+        u.y
+    );
 }
 
 void main() {
+    // Get previous frame
     vec4 prevColor = texture2D(uPreviousTexture, vUv);
     
-    // Calculate base distance to mouse
+    // Calculate base distance to current point
     float dist = distance(vUv, uMousePos);
     
     // Add turbulence
-    float time = float(uMousePos.x + uMousePos.y) * 10.0;
-    vec2 noiseCoord = vUv * 8.0 + time * 0.1;
-    float turbulence = noise(noiseCoord) * 0.15;
+    vec2 noiseCoord = vUv * uTurbulenceScale + uTime * 0.1;
+    float turbulence = noise(noiseCoord) * uTurbulenceStrength;
     
-    // Create organic, fluid-like falloff
-    float baseStrength = 1.0 - smoothstep(0.0, 0.1, dist + turbulence);
-    baseStrength *= 0.7; // Reduce intensity for more subtle effect
-    float edgeNoise = noise(vUv * 20.0 + time * 0.05) * 0.2;
-    float strength = baseStrength + edgeNoise * baseStrength;
+    // Create organic falloff
+    float baseStrength = 1.0 - smoothstep(0.0, uEdgeSharpness, dist + turbulence);
+    baseStrength = pow(baseStrength, 2.0); // Sharper falloff
     
-    // Add some swirling motion
+    // Add swirl effect
     vec2 swirl = vec2(
         noise(noiseCoord + 1.0),
         noise(noiseCoord + 2.0)
-    ) * 0.02 * strength;
+    ) * uSwirlStrength * baseStrength;
     
-    // Sample previous color with swirl offset
-    vec4 swirlPrev = texture2D(uPreviousTexture, vUv + swirl);
+    // Sample previous with swirl
+    vec4 swirlColor = texture2D(uPreviousTexture, vUv + swirl);
     
-    // Create new color with organic falloff
-    vec4 newColor = vec4(1.0, 1.0, 1.0, strength);
+    // Create new trail
+    vec4 newColor = vec4(1.0, 1.0, 1.0, baseStrength);
     
-    // Blend with previous frame
-    vec4 accumulated = mix(
-        swirlPrev * uAccumulationStrength,
-        max(newColor, swirlPrev),
-        strength * 0.7
+    // Blend with decay
+    vec4 finalColor = mix(
+        swirlColor * uAccumulationStrength,
+        max(newColor, swirlColor),
+        baseStrength
     );
     
-    gl_FragColor = accumulated;
+    gl_FragColor = finalColor;
 }

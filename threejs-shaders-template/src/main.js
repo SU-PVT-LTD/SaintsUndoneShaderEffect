@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import GUI from "lil-gui";
 import vertexShader from "./shaders/vertex.glsl";
 import fragmentShader from "./shaders/fragment.glsl";
@@ -9,15 +8,12 @@ import "./style.css";
 
 class ShaderRenderer {
   constructor() {
-    // Debug
     this.gui = new GUI();
-
-    // Mouse
-    this.mouse = new THREE.Vector2();
+    this.mouse = new THREE.Vector2(-1, -1);
     this.trails = [];
     this.maxTrails = 3;
     this.trailSpeed = 0.005;
-    
+
     // Trail generator
     setInterval(() => {
       if (this.trails.length < this.maxTrails) {
@@ -32,35 +28,25 @@ class ShaderRenderer {
       }
     }, 2000);
 
-    // Canvas
     this.canvas = document.querySelector("canvas.webgl");
-
-    // Scene
     this.scene = new THREE.Scene();
-
-    // Sizes
     this.sizes = {
       width: window.innerWidth,
       height: window.innerHeight,
     };
-
-    // Time
     this.clock = new THREE.Clock();
 
     this.initRenderer();
     this.initGeometry();
     this.initTrailRenderTarget();
     this.initCamera();
-    this.initControls();
     this.initEventListeners();
     this.startAnimationLoop();
   }
 
   initGeometry() {
-    // Geometry with more subdivisions for smoother displacement
     this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 256, 256);
-    
-    // Add size controls to GUI
+
     const sizeFolder = this.gui.addFolder('Size Controls');
     sizeFolder.add({ width: 1.5 }, 'width', 0.1, 4.0, 0.1)
       .onChange((value) => {
@@ -71,16 +57,12 @@ class ShaderRenderer {
         this.mesh.scale.y = value;
       });
 
-    // Light
     this.light = new THREE.PointLight(0xffffff, 1);
     this.light.position.set(2, 2, 2);
     this.scene.add(this.light);
 
-    // Normal Map Texture
     const normalMap = new THREE.TextureLoader().load('/NormalMap7.png');
 
-    // Material
-    // Define lighting profiles
     this.profiles = {
       original: {
         ambient: 0.3,
@@ -102,13 +84,12 @@ class ShaderRenderer {
         specularStrength: 0.8,
         specularPower: 24.0,
         wrap: 0.2,
-        color: new THREE.Color('#ec3249'), // Purple tint
+        color: new THREE.Color('#ec3249'),
       },
     };
 
     this.currentProfile = 'soft';
 
-    // Update the material
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
@@ -125,32 +106,27 @@ class ShaderRenderer {
         uSpecularStrength: { value: this.profiles.soft.specularStrength },
         uSpecularPower: { value: this.profiles.soft.specularPower },
         uWrap: { value: this.profiles.soft.wrap },
-        uColor: { value: new THREE.Color(1, 1, 1) }, // Default to white
+        uColor: { value: new THREE.Color(1, 1, 1) },
       },
       side: THREE.DoubleSide,
     });
 
-    // Mesh
     this.mesh = new THREE.Mesh(this.geometry, this.material);
     this.scene.add(this.mesh);
 
-    // Debug controls
     const effectFolder = this.gui.addFolder('Effect Controls');
-
-    // Add profile switcher
-    // Update GUI controls
     effectFolder
-    .add({ profile: this.currentProfile }, 'profile', ['original', 'soft', 'purple'])
-    .onChange((value) => {
-      this.currentProfile = value;
-      const profile = this.profiles[value];
-      this.material.uniforms.uAmbient.value = profile.ambient;
-      this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
-      this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
-      this.material.uniforms.uSpecularPower.value = profile.specularPower;
-      this.material.uniforms.uWrap.value = profile.wrap;
-      this.material.uniforms.uColor.value = profile.color || new THREE.Color(1, 1, 1);
-    });
+      .add({ profile: this.currentProfile }, 'profile', ['original', 'soft', 'purple'])
+      .onChange((value) => {
+        this.currentProfile = value;
+        const profile = this.profiles[value];
+        this.material.uniforms.uAmbient.value = profile.ambient;
+        this.material.uniforms.uDiffuseStrength.value = profile.diffuseStrength;
+        this.material.uniforms.uSpecularStrength.value = profile.specularStrength;
+        this.material.uniforms.uSpecularPower.value = profile.specularPower;
+        this.material.uniforms.uWrap.value = profile.wrap;
+        this.material.uniforms.uColor.value = profile.color || new THREE.Color(1, 1, 1);
+      });
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
@@ -164,7 +140,6 @@ class ShaderRenderer {
       type: THREE.FloatType,
     };
 
-    // Create ping-pong buffers for accumulation
     this.accumulationTargetA = new THREE.WebGLRenderTarget(
       this.sizes.width,
       this.sizes.height,
@@ -177,14 +152,12 @@ class ShaderRenderer {
       rtParams
     );
 
-    // Material for accumulation
     this.trailMaterial = new THREE.ShaderMaterial({
       vertexShader: trailVertexShader,
       fragmentShader: trailFragmentShader,
       uniforms: {
         uPreviousTexture: { value: null },
-        uCurrentTexture: { value: null },
-        uMousePos: { value: this.mouse },
+        uMousePos: { value: new THREE.Vector2(-1, -1) },
         uAccumulationStrength: { value: 0.98 },
         uTurbulenceScale: { value: 8.0 },
         uTurbulenceStrength: { value: 0.15 },
@@ -192,9 +165,10 @@ class ShaderRenderer {
         uSwirlStrength: { value: 0.02 },
         uTime: { value: 0.0 }
       },
+      transparent: true,
+      blending: THREE.AdditiveBlending,
     });
 
-    // Add GUI controls for fluid effects
     const fluidFolder = this.gui.addFolder('Fluid Controls');
     fluidFolder.add(this.trailMaterial.uniforms.uTurbulenceScale, 'value', 1.0, 20.0, 0.1).name('Turbulence Scale');
     fluidFolder.add(this.trailMaterial.uniforms.uTurbulenceStrength, 'value', 0.0, 0.5, 0.01).name('Turbulence Strength');
@@ -202,7 +176,6 @@ class ShaderRenderer {
     fluidFolder.add(this.trailMaterial.uniforms.uSwirlStrength, 'value', 0.0, 0.1, 0.001).name('Swirl Strength');
     fluidFolder.add(this.trailMaterial.uniforms.uAccumulationStrength, 'value', 0.9, 0.999, 0.001).name('Trail Persistence');
 
-    // Setup accumulation scene
     this.trailPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
       this.trailMaterial
@@ -213,7 +186,6 @@ class ShaderRenderer {
     this.trailCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     this.trailCamera.position.z = 1;
 
-    // Clear initial render targets
     this.renderer.setRenderTarget(this.accumulationTargetA);
     this.renderer.clear();
     this.renderer.setRenderTarget(this.accumulationTargetB);
@@ -235,13 +207,10 @@ class ShaderRenderer {
   initRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
+      alpha: true,
     });
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  }
-
-  initControls() {
-    // Remove controls for background use
   }
 
   initEventListeners() {
@@ -255,16 +224,10 @@ class ShaderRenderer {
   }
 
   updateTrails() {
-    // Update existing trails
     this.trails = this.trails.filter(trail => {
-      // Move trail
       trail.position.x += Math.cos(trail.angle) * this.trailSpeed;
       trail.position.y += Math.sin(trail.angle) * this.trailSpeed;
-      
-      // Reduce life
       trail.life -= 0.001;
-      
-      // Remove if out of bounds or dead
       return trail.life > 0 && 
              trail.position.x >= 0 && trail.position.x <= 1 &&
              trail.position.y >= 0 && trail.position.y <= 1;
@@ -272,70 +235,60 @@ class ShaderRenderer {
   }
 
   handleResize() {
-    // Update sizes
     this.sizes.width = window.innerWidth;
     this.sizes.height = window.innerHeight;
 
-    // Update camera
     this.camera.aspect = this.sizes.width / this.sizes.height;
     this.camera.updateProjectionMatrix();
 
-    // Update renderer
     this.renderer.setSize(this.sizes.width, this.sizes.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // Update trail render targets
     this.accumulationTargetA.setSize(this.sizes.width, this.sizes.height);
     this.accumulationTargetB.setSize(this.sizes.width, this.sizes.height);
   }
 
   updateTrailTexture() {
-    // Update time uniform
     this.trailMaterial.uniforms.uTime.value += 0.01;
 
-    // Ping-pong between render targets
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;
 
-    // Update uniforms and set render target
+    // Set up for accumulation
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
     this.renderer.setRenderTarget(currentTarget);
 
-    // First pass: Render autonomous trails
-    this.trails.forEach(trail => {
-      this.trailMaterial.uniforms.uMousePos.value = trail.position;
-      this.renderer.render(this.trailScene, this.trailCamera);
-    });
-    
-    // Second pass: Render cursor trail
-    if (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) {
-      this.trailMaterial.uniforms.uMousePos.value = this.mouse;
+    // First render previous frame with decay
+    this.renderer.render(this.trailScene, this.trailCamera);
+
+    // Handle autonomous trails
+    if (this.trails.length > 0) {
+      this.trails.forEach(trail => {
+        this.trailMaterial.uniforms.uMousePos.value.copy(trail.position);
+        this.renderer.render(this.trailScene, this.trailCamera);
+      });
+    }
+
+    // Handle mouse trail separately
+    if (this.mouse.x >= 0 && this.mouse.x <= 1 && this.mouse.y >= 0 && this.mouse.y <= 1) {
+      this.trailMaterial.uniforms.uMousePos.value.copy(this.mouse);
       this.renderer.render(this.trailScene, this.trailCamera);
     }
-    
-    // Update trail positions for next frame
+
+    // Update trails for next frame
     this.updateTrails();
-    
-    // Reset render target and update material
+
+    // Update main material
     this.renderer.setRenderTarget(null);
     this.material.uniforms.uTrailTexture.value = currentTarget.texture;
 
     // Swap buffers
-    [this.accumulationTargetA, this.accumulationTargetB] = 
-      [this.accumulationTargetB, this.accumulationTargetA];
+    [this.accumulationTargetA, this.accumulationTargetB] = [this.accumulationTargetB, this.accumulationTargetA];
   }
 
   animate() {
-    // Update controls
-    //this.controls.update();
-
-    // Update the trail texture
     this.updateTrailTexture();
-
-    // Render the main scene
     this.renderer.render(this.scene, this.camera);
-
-    // Call animate again on the next frame
     window.requestAnimationFrame(() => this.animate());
   }
 
@@ -344,5 +297,4 @@ class ShaderRenderer {
   }
 }
 
-// Initialize the renderer when the script loads
 const shaderRenderer = new ShaderRenderer();
