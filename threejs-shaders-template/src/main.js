@@ -299,11 +299,20 @@ class ShaderRenderer {
 
     // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
-    // Update with cursor position first, then fall back to autonomous trails
-    this.trailMaterial.uniforms.uMousePos.value = 
-      (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) ? 
-      this.mouse : 
-      (this.trails.length > 0 ? this.trails[0].position : new THREE.Vector2(-1, -1));
+    
+    // Handle both cursor and autonomous trails
+    let currentTrail = this.trails[0]?.position || new THREE.Vector2(-1, -1);
+    this.trailMaterial.uniforms.uMousePos.value = currentTrail;
+    
+    // Render first trail
+    this.renderer.setRenderTarget(currentTarget);
+    this.renderer.render(this.trailScene, this.trailCamera);
+    
+    // If cursor is in bounds, render it too
+    if (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) {
+      this.trailMaterial.uniforms.uMousePos.value = this.mouse;
+      this.renderer.render(this.trailScene, this.trailCamera);
+    }
     
     this.updateTrails();
 
