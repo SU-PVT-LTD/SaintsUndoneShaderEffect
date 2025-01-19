@@ -227,14 +227,20 @@ class ShaderRenderer {
   }
 
   initCamera() {
-    this.camera = new THREE.PerspectiveCamera(
-      45,
-      this.sizes.width / this.sizes.height,
-      0.1,
-      100
-    );
-    this.camera.position.z = 2;
+    const fov = 45;
+    const aspect = this.sizes.width / this.sizes.height;
+    this.camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 100);
+    
+    // Calculate camera position to fit plane in view
+    const distance = this.calculateCameraDistance(fov);
+    this.camera.position.z = distance;
+    
     this.scene.add(this.camera);
+  }
+
+  calculateCameraDistance(fov) {
+    const planeHeight = 1.5; // Your plane height
+    return (planeHeight / 2) / Math.tan((fov / 2) * Math.PI / 180);
   }
 
   initRenderer() {
@@ -283,6 +289,8 @@ class ShaderRenderer {
 
     // Update camera
     this.camera.aspect = this.sizes.width / this.sizes.height;
+    const distance = this.calculateCameraDistance(45);
+    this.camera.position.z = distance;
     this.camera.updateProjectionMatrix();
 
     // Update renderer
