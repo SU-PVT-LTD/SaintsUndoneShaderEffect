@@ -40,7 +40,7 @@ void main()
     
     // Blend the lighting components based on profile settings
     vec3 baseColor = albedo.rgb * (uAmbient + diffuse * uDiffuseStrength + specular);
-    vec3 color = baseColor;
+    vec3 color = baseColor * 0.7; // Reduce overall brightness
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));

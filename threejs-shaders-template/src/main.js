@@ -164,6 +164,8 @@ class ShaderRenderer {
     effectFolder.add(this.material.uniforms.uDisplacementStrength, "value", 0.0, 0.2, 0.001).name("Displacement");
     effectFolder.add(this.material.uniforms.uEffectRadius, "value", 0.1, 0.5, 0.01).name("Radius");
     effectFolder.add(this.material.uniforms.uDecay, "value", 0.0, 1.0, 0.01).name("Decay");
+    effectFolder.add(this.material.uniforms.uSpecularStrength, "value", 0.0, 2.0, 0.01).name("Shininess Strength");
+    effectFolder.add(this.material.uniforms.uSpecularPower, "value", 1.0, 64.0, 1.0).name("Shininess Power");
   }
 
   initTrailRenderTarget() {
