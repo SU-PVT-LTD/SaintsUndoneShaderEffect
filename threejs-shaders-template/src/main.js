@@ -57,8 +57,8 @@ class ShaderRenderer {
   }
 
   initGeometry() {
-    // Geometry with more subdivisions for smoother displacement
-    this.geometry = new THREE.PlaneGeometry(1.5, 1.5, 256, 256);
+    // Initialize with a default geometry, will be updated when texture loads
+    this.geometry = new THREE.PlaneGeometry(1, 1, 256, 256);
     
     // Add size controls to GUI
     const sizeFolder = this.gui.addFolder('Size Controls');
@@ -77,7 +77,12 @@ class ShaderRenderer {
     this.scene.add(this.light);
 
     // Normal Map Texture
-    const normalMap = new THREE.TextureLoader().load('/NormalMap7.png');
+    const normalMap = new THREE.TextureLoader().load('/NormalMap7.png', (texture) => {
+      const aspectRatio = texture.image.width / texture.image.height;
+      // Update geometry to match texture dimensions while maintaining center position
+      this.geometry = new THREE.PlaneGeometry(aspectRatio * 1.5, 1.5, 256, 256);
+      this.mesh.geometry = this.geometry;
+    });
 
     // Material
     // Define lighting profiles
