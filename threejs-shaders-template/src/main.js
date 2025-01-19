@@ -14,6 +14,23 @@ class ShaderRenderer {
 
     // Mouse
     this.mouse = new THREE.Vector2();
+    this.trails = [];
+    this.maxTrails = 3;
+    this.trailSpeed = 0.005;
+    
+    // Trail generator
+    setInterval(() => {
+      if (this.trails.length < this.maxTrails) {
+        const startX = Math.random();
+        const startY = Math.random();
+        const angle = Math.random() * Math.PI * 2;
+        this.trails.push({
+          position: new THREE.Vector2(startX, startY),
+          angle: angle,
+          life: 1.0
+        });
+      }
+    }, 2000);
 
     // Canvas
     this.canvas = document.querySelector("canvas.webgl");
@@ -237,6 +254,23 @@ class ShaderRenderer {
     this.mouse.y = 1 - event.clientY / this.sizes.height;
   }
 
+  updateTrails() {
+    // Update existing trails
+    this.trails = this.trails.filter(trail => {
+      // Move trail
+      trail.position.x += Math.cos(trail.angle) * this.trailSpeed;
+      trail.position.y += Math.sin(trail.angle) * this.trailSpeed;
+      
+      // Reduce life
+      trail.life -= 0.001;
+      
+      // Remove if out of bounds or dead
+      return trail.life > 0 && 
+             trail.position.x >= 0 && trail.position.x <= 1 &&
+             trail.position.y >= 0 && trail.position.y <= 1;
+    });
+  }
+
   handleResize() {
     // Update sizes
     this.sizes.width = window.innerWidth;
@@ -265,7 +299,12 @@ class ShaderRenderer {
 
     // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
-    this.trailMaterial.uniforms.uMousePos.value = this.mouse;
+    // Update with the first active trail position
+    this.trailMaterial.uniforms.uMousePos.value = this.trails.length > 0 ? 
+      this.trails[0].position : 
+      new THREE.Vector2(-1, -1);  // Off-screen when no trails
+    
+    this.updateTrails();
 
     // Render accumulation
     this.renderer.setRenderTarget(currentTarget);

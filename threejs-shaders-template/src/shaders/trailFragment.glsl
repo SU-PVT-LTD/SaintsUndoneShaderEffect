@@ -43,7 +43,8 @@ void main() {
     float turbulence = noise(noiseCoord) * 0.15;
     
     // Create organic, fluid-like falloff
-    float baseStrength = 1.0 - smoothstep(0.0, 0.15, dist + turbulence);
+    float baseStrength = 1.0 - smoothstep(0.0, 0.1, dist + turbulence);
+    baseStrength *= 0.7; // Reduce intensity for more subtle effect
     float edgeNoise = noise(vUv * 20.0 + time * 0.05) * 0.2;
     float strength = baseStrength + edgeNoise * baseStrength;
     
