@@ -297,30 +297,31 @@ class ShaderRenderer {
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;
 
-    // Update uniforms
+    // Update uniforms and set render target
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
-    
-    // Render each autonomous trail
     this.renderer.setRenderTarget(currentTarget);
-    for (const trail of this.trails) {
+
+    // First pass: Render autonomous trails
+    this.trails.forEach(trail => {
       this.trailMaterial.uniforms.uMousePos.value = trail.position;
       this.renderer.render(this.trailScene, this.trailCamera);
-    }
+    });
     
-    // Render cursor trail if in bounds
+    // Second pass: Render cursor trail
     if (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) {
       this.trailMaterial.uniforms.uMousePos.value = this.mouse;
       this.renderer.render(this.trailScene, this.trailCamera);
     }
     
+    // Update trail positions for next frame
     this.updateTrails();
+    
+    // Reset render target and update material
     this.renderer.setRenderTarget(null);
-
-    // Update main material
     this.material.uniforms.uTrailTexture.value = currentTarget.texture;
 
     // Swap buffers
-    [this.accumulationTargetA, this.accumulationTargetB] =
+    [this.accumulationTargetA, this.accumulationTargetB] = 
       [this.accumulationTargetB, this.accumulationTargetA];
   }
 
