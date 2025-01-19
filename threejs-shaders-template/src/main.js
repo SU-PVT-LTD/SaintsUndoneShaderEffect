@@ -299,10 +299,11 @@ class ShaderRenderer {
 
     // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
-    // Update with the first active trail position
-    this.trailMaterial.uniforms.uMousePos.value = this.trails.length > 0 ? 
-      this.trails[0].position : 
-      new THREE.Vector2(-1, -1);  // Off-screen when no trails
+    // Update with cursor position first, then fall back to autonomous trails
+    this.trailMaterial.uniforms.uMousePos.value = 
+      (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) ? 
+      this.mouse : 
+      (this.trails.length > 0 ? this.trails[0].position : new THREE.Vector2(-1, -1));
     
     this.updateTrails();
 
