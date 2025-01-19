@@ -250,14 +250,8 @@ class ShaderRenderer {
   }
 
   handleMouseMove(event) {
-    if (event.clientX < 0 || event.clientX > this.sizes.width || 
-        event.clientY < 0 || event.clientY > this.sizes.height) {
-      this.mouse.x = -1;
-      this.mouse.y = -1;
-      return;
-    }
-    this.mouse.x = Math.max(0, Math.min(1, event.clientX / this.sizes.width));
-    this.mouse.y = Math.max(0, Math.min(1, 1 - event.clientY / this.sizes.height));
+    this.mouse.x = event.clientX / this.sizes.width;
+    this.mouse.y = 1 - event.clientY / this.sizes.height;
   }
 
   updateTrails() {
