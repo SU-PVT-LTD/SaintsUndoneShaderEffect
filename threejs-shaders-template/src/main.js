@@ -76,8 +76,9 @@ class ShaderRenderer {
     this.light.position.set(2, 2, 2);
     this.scene.add(this.light);
 
-    // Normal Map Texture
-    const normalMap = new THREE.TextureLoader().load('/NormalMap7.png', (texture) => {
+    // Load textures
+    const textureLoader = new THREE.TextureLoader();
+    const normalMap = textureLoader.load('/NormalMap7.png', (texture) => {
       const aspectRatio = texture.image.width / texture.image.height;
       // Update geometry to match texture dimensions while maintaining center position
       this.geometry = new THREE.PlaneGeometry(aspectRatio * 1.5, 1.5, 256, 256);
@@ -114,10 +115,14 @@ class ShaderRenderer {
     this.currentProfile = 'soft';
 
     // Update the material
+    // Load albedo texture
+    const albedoMap = textureLoader.load('/background.png');
+    
     this.material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       uniforms: {
+        uAlbedoMap: { value: albedoMap },
         uMouse: { value: this.mouse },
         uTrailTexture: { value: null },
         uNormalMap: { value: normalMap },

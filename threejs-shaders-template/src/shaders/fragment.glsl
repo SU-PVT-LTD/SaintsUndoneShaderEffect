@@ -11,12 +11,16 @@ uniform float uSpecularStrength;
 uniform float uSpecularPower;
 uniform float uWrap;
 uniform vec3 uColor;
+uniform sampler2D uAlbedoMap;
 
 void main()
 {
     // Get accumulated mask from trail texture
     vec4 accumulation = texture2D(uTrailTexture, vUv);
     float finalStrength = accumulation.r;
+    
+    // Sample albedo texture
+    vec4 albedo = texture2D(uAlbedoMap, vUv);
 
     // Apply reveal mask more strongly
     vec3 normalMap = texture2D(uNormalMap, vUv).rgb * 2.0 - 1.0;
@@ -35,8 +39,8 @@ void main()
     float specular = pow(max(dot(mixedNormal, halfDir), 0.0), uSpecularPower) * uSpecularStrength;
     
     // Blend the lighting components based on profile settings
-    vec3 baseColor = vec3(0.5) * (uAmbient + diffuse * uDiffuseStrength + specular);
-    vec3 color = baseColor * uColor; // Apply the color tint
+    vec3 baseColor = albedo.rgb * (uAmbient + diffuse * uDiffuseStrength + specular);
+    vec3 color = baseColor;
     
     // Ensure we don't exceed maximum brightness
     color = min(color, vec3(1.0));
