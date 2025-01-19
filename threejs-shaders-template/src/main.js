@@ -257,24 +257,17 @@ class ShaderRenderer {
   updateTrails() {
     // Update existing trails
     this.trails = this.trails.filter(trail => {
-      // Move trail with bounce behavior
+      // Move trail
       trail.position.x += Math.cos(trail.angle) * this.trailSpeed;
       trail.position.y += Math.sin(trail.angle) * this.trailSpeed;
       
-      // Bounce off edges
-      if (trail.position.x <= 0 || trail.position.x >= 1) {
-        trail.angle = Math.PI - trail.angle;
-        trail.position.x = Math.max(0, Math.min(1, trail.position.x));
-      }
-      if (trail.position.y <= 0 || trail.position.y >= 1) {
-        trail.angle = -trail.angle;
-        trail.position.y = Math.max(0, Math.min(1, trail.position.y));
-      }
-      
       // Reduce life
-      trail.life -= 0.0005;
+      trail.life -= 0.001;
       
-      return trail.life > 0;
+      // Remove if out of bounds or dead
+      return trail.life > 0 && 
+             trail.position.x >= 0 && trail.position.x <= 1 &&
+             trail.position.y >= 0 && trail.position.y <= 1;
     });
   }
 
@@ -297,43 +290,33 @@ class ShaderRenderer {
   }
 
   updateTrailTexture() {
+    // Update time uniform
     this.trailMaterial.uniforms.uTime.value += 0.01;
 
+    // Ping-pong between render targets
     const currentTarget = this.accumulationTargetA;
     const previousTarget = this.accumulationTargetB;
 
-    // Set previous texture and prepare current target
+    // Update uniforms
     this.trailMaterial.uniforms.uPreviousTexture.value = previousTarget.texture;
-    this.renderer.setRenderTarget(currentTarget);
+    // Update with cursor position first, then fall back to autonomous trails
+    this.trailMaterial.uniforms.uMousePos.value = 
+      (this.mouse.x > 0 && this.mouse.x < 1 && this.mouse.y > 0 && this.mouse.y < 1) ? 
+      this.mouse : 
+      (this.trails.length > 0 ? this.trails[0].position : new THREE.Vector2(-1, -1));
     
-    // Clear the current target
-    this.renderer.clear();
-
-    // Render previous state
-    this.trailMaterial.uniforms.uMousePos.value = new THREE.Vector2(-1, -1);
-    this.renderer.render(this.trailScene, this.trailCamera);
-
-    // Render all trails in a single pass
-    const allPositions = [...this.trails.map(t => t.position)];
-    if (this.mouse.x >= 0 && this.mouse.x <= 1 && this.mouse.y >= 0 && this.mouse.y <= 1) {
-      allPositions.push(this.mouse);
-    }
-
-    // Render each position
-    allPositions.forEach(position => {
-      this.trailMaterial.uniforms.uMousePos.value = position;
-      this.renderer.render(this.trailScene, this.trailCamera);
-    });
-
-    // Update autonomous trails
     this.updateTrails();
 
-    // Update main material and clean up
+    // Render accumulation
+    this.renderer.setRenderTarget(currentTarget);
+    this.renderer.render(this.trailScene, this.trailCamera);
     this.renderer.setRenderTarget(null);
+
+    // Update main material
     this.material.uniforms.uTrailTexture.value = currentTarget.texture;
 
     // Swap buffers
-    [this.accumulationTargetA, this.accumulationTargetB] = 
+    [this.accumulationTargetA, this.accumulationTargetB] =
       [this.accumulationTargetB, this.accumulationTargetA];
   }
 
