@@ -34,11 +34,11 @@ float noise(vec2 p) {
 void main() {
     vec4 prevColor = texture2D(uPreviousTexture, vUv);
     
-    // Calculate base distance to mouse
-    float dist = distance(vUv, uMousePos);
+    // Calculate base distance to mouse and check for invalid position
+    float dist = (uMousePos.x < 0.0 || uMousePos.y < 0.0) ? 2.0 : distance(vUv, uMousePos);
     
     // Add turbulence
-    float time = float(uMousePos.x + uMousePos.y) * 10.0;
+    float time = (uMousePos.x < 0.0 || uMousePos.y < 0.0) ? 0.0 : float(uMousePos.x + uMousePos.y) * 10.0;
     vec2 noiseCoord = vUv * 8.0 + time * 0.1;
     float turbulence = noise(noiseCoord) * 0.15;
     
